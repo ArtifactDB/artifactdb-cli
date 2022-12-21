@@ -34,6 +34,8 @@ def load_config():
         cfg = {"contexts": [],"last-modification": datetime.datetime.now().isoformat()}
         cfg_path.parent.mkdir(parents=True,exist_ok=True)
         yaml.dump(cfg,open(cfg_path,"w"))
+    if not "current-context" in cfg:
+        cfg["current-context"] = None
 
     return cfg
 

@@ -15,6 +15,80 @@ app = Typer(help="Manage ArtifactDB contexts (connections, clients, ...)")
 
 class ContextNotFound(Exception): pass
 
+#########
+# UTILS #
+#########
+
+def load_contexts():
+    cfg = load_config()
+    return cfg["contexts"]
+
+
+def list_context_names():
+    contexts = load_contexts()
+    return sorted([ctx["name"] for ctx in contexts if ctx.get("name")])
+
+def load_context(name):
+    contexts = load_contexts()
+    for ctx in contexts:
+        if ctx["name"] == name:
+            return ctx
+    raise ContextNotFound(f"No such context: {name!r}")
+
+
+def display_context(name=None, context=None):
+    if context is None:
+        assert name
+        context = load_context(name)
+    assert context, f"Couldn't find context named {name!r}"
+    console = Console()
+    console.print(Syntax(yaml.dump(context),"yaml"))
+
+
+def save_context(name, context, overwrite=False):
+    assert name
+    try:
+        load_context(name)
+        if overwrite:
+            print(f"Overwriting existing context {name!r}")
+        else:
+            print(f"Context {name!r} already exists")
+            raise typer.Exit(code=1)
+    except ContextNotFound:
+        pass  # all good, doesn't exist yet
+    # no matter what, try to find one with the same name to remove it
+    contexts = load_contexts()
+    idx = None
+    for i,ctx in enumerate(contexts):
+        if ctx["name"] == name:
+            idx= i
+            break
+    if not idx is None:
+        contexts.pop(idx)
+    contexts.append(context)
+    cfg = load_config()
+    cfg["contexts"] = contexts
+    save_config(cfg)
+
+
+def set_current_context(name):
+    assert name in list_context_names(), f"Context {name} doesn't exist"
+    cfg = load_config()
+    cfg["current-context"] = name
+    save_config(cfg)
+
+
+def get_current_context():
+    cfg = load_config()
+    current = cfg["current-context"]
+    if current is None:
+        raise ContextNotFound("No current context found, `use` command to set one")
+    return current
+
+
+############
+# COMMANDS #
+############
 
 @app.command()
 def create(
@@ -109,51 +183,35 @@ def create(
     save_context(name=ctx_name,context=ctx,overwrite=True)
 
 
-def load_contexts():
-    cfg = load_config()
-    return cfg["contexts"]
+@app.command()
+def list():
+    """List available ArtifactDB contexts"""
+    print(list_context_names())
 
 
-def load_context(name):
-    contexts = load_contexts()
-    for ctx in contexts:
-        if ctx["name"] == name:
-            return ctx
-    raise ContextNotFound(f"No such context: {name!r}")
+@app.command()
+def show(
+        name:str = Argument(
+            None,
+            help="Context name (or current one if not specified)",
+            autocompletion=list_context_names,
+        ),
+    ):
+    """Show ArtifactDB context details"""
+    if name is None:
+        name = get_current_context()
+    display_context(name=name)
 
 
-def display_context(name=None, context=None):
-    if context is None:
-        assert name
-        context = load_context(name)
-    assert context, f"Couldn't find context named {name!r}"
-    console = Console()
-    console.print(Syntax(yaml.dump(context),"yaml"))
-
-
-def save_context(name, context, overwrite=False):
-    try:
-        load_context(name)
-        if overwrite:
-            print(f"Overwriting existing context {name!r}")
-        else:
-            print(f"Context {name!r} already exists")
-            raise typer.Exit(code=1)
-    except ContextNotFound:
-        pass  # all good, doesn't exist yet
-    # no matter what, try to find one with the same name to remove it
-    contexts = load_contexts()
-    idx = None 
-    for i,ctx in enumerate(contexts):
-        if ctx["name"] == name:
-            idx= i
-            break
-    if not idx is None:
-        contexts.pop(idx)
-    contexts.append(context)
-    cfg = load_config()
-    cfg["contexts"] = contexts
-    save_config(cfg)
-
+@app.command()
+def use(
+        name:str = Argument(
+            ...,
+            help="Context name",
+            autocompletion=list_context_names,
+        ),
+    ):
+    """Set given context as current one"""
+    set_current_context(name)
 
 

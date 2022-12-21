@@ -14,3 +14,8 @@ except PackageNotFoundError:  # pragma: no cover
     __version__ = "unknown"
 finally:
     del version, PackageNotFoundError
+
+from .main import run
+
+if __name__ == "__main__":
+    main()

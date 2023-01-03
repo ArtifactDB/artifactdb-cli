@@ -2,6 +2,7 @@ import glob
 import enum
 import pathlib
 import datetime
+import json
 from getpass import getuser
 
 
@@ -133,34 +134,34 @@ def upload_command(
     completed_by = None  # only adjusted when low expires_in value
     if verbose:
         num_files = len(list(staging_path.rglob("*")))
-        print("[bold]Summary[/bold]")
-        print(f"Uploading [blue]{num_files}[/blue] files from folder {staging_path}")
+        print("[bold underline]Summary[/bold underline]")
+        print(f":sparkles: Uploading [blue]{num_files}[/blue] files from folder {staging_path}")
 
         if project_id:
             if version:
-                print(f"🗄️ To project [green]{project_id}[/green] and version [green]{version}[/green]")
+                print(f":file_cabinet:  To project [green]{project_id}[/green] and version [green]{version}[/green]")
             else:
-                print(f"🗄️  As a new version within project [green]{project_id}[/green]")
+                print(f":file_cabinet:  As a new version within project [green]{project_id}[/green]")
         else:
-            print("🗄️  As a [green]new[/green] project")
+            print(":file_cabinet:  As a [green]new[/green] project")
 
         if upload_mode == UPLOAD_MODES.presigned:
             mode = upload_mode.value
-            print("🚀  Using S3 [bright_black]presigned-URLs[/bright_black] upload mode")
+            print(":rocket: Using S3 [bright_black]presigned-URLs[/bright_black] upload mode")
         else:
             mode,sts_impl = upload_mode.value.split(":")
-            print(f"🚀  Using [bright_black]STS[/bright_black] credentials with [bright_black]{sts_impl}[/bright_black] client")
+            print(f":rocket: Using [bright_black]STS[/bright_black] credentials with [bright_black]{sts_impl}[/bright_black] client")
         if expires_in:
             parsed = dateparser.parse(expires_in)
             if not parsed:
                 raise InvalidArgument(f"Couldn't parse date {expires_in}")
             if parsed - datetime.datetime.now() < datetime.timedelta(days=1):
                 completed_by = expires_in
-            print(f"⏲️  Expiring {expires_in!r} ('{parsed}')")
+            print(f":hourglass_flowing_sand: Expiring {expires_in!r} ('{parsed}')")
 
         console = Console()
-        print("🔐  Setting following permissions:")
-        console.print(Syntax(yaml.dump(permissions.dict()),"yaml"))
+        print(":closed_lock_with_key: Setting following permissions:")
+        console.print(Syntax(yaml.dump(json.loads(permissions.json())),"yaml"))
     if confirm:
         ok = Confirm.ask(
             f"❓ Proceed?",
@@ -169,7 +170,7 @@ def upload_command(
         if not ok:
             raise Abort()
     # let's go...
-    status = client.upload_project(
+    status, project_id, version = client.upload_project(
         staging_dir=staging_path.as_posix(),
         permissions_info=permissions,
         mode=mode,
@@ -177,14 +178,18 @@ def upload_command(
         version=version,
         expires_in=expires_in,
         validate=validate,
-        #completed_by=completed_by,  # Not supported yet
+        completed_by=completed_by,
     )
 
     # save job URL in current context to easily check after
     ctx = load_current_context()
-    ctx.setdefault("jobs",[]).append(status.dict())
+    ctx.setdefault("jobs",[]).append({
+        "project_id": project_id,
+        "version": version,
+        "job": status.dict()
+    })
     save_context(name=ctx["name"],context=ctx,overwrite=True)
-    print("⚙️   Job created:")
+    print(":gear: Job created for project {project_id}@{version}:")
     print(status)
 
 

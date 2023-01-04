@@ -206,9 +206,12 @@ def list(
     if not verbose:
         for key in ("path","job_url",):
             [_["job"].pop(key,None) for _ in jobs]
-    jobs.sort(key=lambda e: e.get("created_at",datetime.datetime.fromtimestamp(0)))
-    console = Console()
-    console.print(Syntax(yaml.dump(jobs),"yaml"))
+    if jobs:
+        jobs.sort(key=lambda e: e.get("created_at",datetime.datetime.fromtimestamp(0)))
+        console = Console()
+        console.print(Syntax(yaml.dump(jobs),"yaml"))
+    else:
+        print("No jobs recorded in current context, nothing to list")
 
 
 @app.command()

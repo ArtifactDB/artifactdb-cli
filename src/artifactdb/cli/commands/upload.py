@@ -186,6 +186,7 @@ def upload_command(
     ctx.setdefault("jobs",[]).append({
         "project_id": project_id,
         "version": version,
+        "created_at": datetime.datetime.now().isoformat(),
         "job": status.dict()
     })
     save_context(name=ctx["name"],context=ctx,overwrite=True)

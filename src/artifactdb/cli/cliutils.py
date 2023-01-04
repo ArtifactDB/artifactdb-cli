@@ -77,12 +77,13 @@ def load_context(name):
     raise ContextNotFound(f"No such context: {name!r}")
 
 
-def save_context(name, context, overwrite=False):
+def save_context(name, context, overwrite=False, quiet=False):
     assert name
     try:
         load_context(name)
         if overwrite:
-            print(f"Overwriting existing context {name!r}")
+            if not quiet:
+                print(f"Overwriting existing context {name!r}")
         else:
             print(f"Context {name!r} already exists")
             raise typer.Exit(code=1)

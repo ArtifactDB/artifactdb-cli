@@ -9,7 +9,8 @@ from rich.syntax import Syntax
 from rich.console import Console
 
 from ..cliutils import get_client, load_config, save_config, MissingArgument, \
-                       load_contexts, load_context, ContextNotFound, get_current_context
+                       load_contexts, load_context, ContextNotFound, get_current_context, \
+                       save_context
 
 
 COMMAND_NAME = "context"
@@ -40,8 +41,8 @@ def set_current_context(name):
 
 
 def collect_auth_username_info(adb_client, auth_client_id, auth_username):
-    main_client = adb_client.auth_clients.get("main")
-    other_clients = adb_client.auth_clients.get("others",[])
+    main_client = adb_client._auth_clients.get("main")
+    other_clients = adb_client._auth_clients.get("others",[])
     all_clients = []
     # trigger default value in the prompt, only if we have amin_client defined,
     # otherwise we end up with an empty client_id
@@ -123,7 +124,7 @@ def create(
     if not name:
         ctx_name = Prompt.ask(
             "What is the name of the context to create? ",
-            default=client.name,
+            default=f"{client._name}-{client._env}",
         )
     if not auth_service_account_id:
         auth_client_id,auth_username = collect_auth_username_info(client,auth_client_id,auth_username)

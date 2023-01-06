@@ -10,7 +10,7 @@ from rich.console import Console
 
 from ..cliutils import get_client, load_config, save_config, MissingArgument, \
                        load_contexts, load_context, ContextNotFound, get_current_context, \
-                       save_context
+                       save_context, get_contextual_client
 
 
 COMMAND_NAME = "context"
@@ -173,6 +173,9 @@ def create(
         if not confirmed:
             raise Abort()
     save_context(name=ctx_name,context=ctx,overwrite=True)
+    # check we can create a client
+    _ = get_contextual_client()
+
 
 
 @app.command()

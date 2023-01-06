@@ -29,6 +29,8 @@ def build_auth(auth_info):
             raise InvalidArgument("Auth. URL not properly formatted, can't extract realm")
         realm_name = parts[-1]
         url = parts[0]
+    else:
+        raise InvalidArgument("Auth. URL must contain the ream name in the path (.../realms/<name>)")
     auth_kwargs = {
         "server_url": url,
         "realm": realm_name,

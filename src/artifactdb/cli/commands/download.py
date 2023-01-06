@@ -30,7 +30,7 @@ app = Typer(help="Download files from an ArtifactDB instance")
 #########
 
 def download_one_artifact(client, project_id, version, path, dest, overwrite=False):
-    tgt = pathlib.Path(project_id,version,path)
+    tgt = pathlib.Path(dest,project_id,version,path)
     if tgt.exists() and not overwrite:
         print(f"'{tgt}' exists, not overwriting")
         raise Abort()
@@ -42,7 +42,7 @@ def download_one_artifact(client, project_id, version, path, dest, overwrite=Fal
     outf.rename(tgt)
     # purge damn cache otherwise it thinks it's still there
     try:
-        cache = BiocFileCache(client._cache_dir)
+        cache = BiocFileCache(client._cache_controller.cache_dir)
         cache.remove(aid)
     except FileNotFoundError:
         pass  # we deleted it, that's fine

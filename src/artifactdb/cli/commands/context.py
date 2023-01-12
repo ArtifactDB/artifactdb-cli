@@ -174,7 +174,7 @@ def create(
             raise Abort()
     save_context(name=ctx_name,context=ctx,overwrite=True)
     # check we can create a client
-    _ = get_contextual_client()
+    _ = get_contextual_client(name=ctx_name)
 
 
 

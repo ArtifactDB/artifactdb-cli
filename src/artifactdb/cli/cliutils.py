@@ -56,13 +56,14 @@ def build_auth(auth_info):
         return harpocrates.Authenticate(**auth_kwargs)
 
 
-def get_contextual_client():
-    ctx = load_current_context()
+def get_contextual_client(name=None,**kwargs):
+    ctx = load_current_context() if name is None else load_context(name)
     auth = build_auth(ctx["auth"])
     client = get_client(
         url=ctx["url"],
         auth=auth,
         project_prefix=ctx["project_prefix"],
+        **kwargs,
     )
 
     return client

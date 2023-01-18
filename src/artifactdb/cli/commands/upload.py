@@ -202,7 +202,7 @@ def upload_command(
         "job": status.dict()
     })
     save_context(name=ctx["name"],context=ctx,overwrite=True)
-    print(":gear: Job created for project {project_id}@{version}:")
+    print(f":gear: Job created for project {project_id}@{version}:")
     print(status)
 
 

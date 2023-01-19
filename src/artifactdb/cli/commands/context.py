@@ -208,5 +208,7 @@ def use(
     ):
     """Set given context as current one"""
     set_current_context(name)
+    ctx = load_context(name)
+    print(f"Switched to context {name!r}: [blue3]{ctx['url']}[/blue3]")
 
 

@@ -2,20 +2,17 @@ import glob
 import enum
 import pathlib
 import datetime
-import json
-from getpass import getuser
 
 
-import jose.jwt
-import yaml
 import typer
 import dateparser
 from typer import Typer, Argument, Option, Abort, Exit
 from rich import print, print_json
 from rich.prompt import Prompt, Confirm
-from rich.syntax import Syntax
 from rich.console import Console
 
+from artifactdb.utils.misc import get_class_from_classpath
+from artifactdb.cli.formatters.default import YamlFormatter
 from ..cliutils import get_contextual_client, load_current_context, save_context, \
                        PermissionsInfo, InvalidArgument
 
@@ -26,12 +23,31 @@ COMMAND_FUNC = "search_command"
 
 app = Typer(help="Searching metadata")
 
-FORMATS = enum.Enum("formats", {k:k for k in ("json","yaml",)})
-
+DEFAULT_FORMATTER_CLASS = YamlFormatter
 
 #########
 # UTILS #
 #########
+
+
+
+def load_formatters():
+    return enum.Enum("formatters",{
+        "artifactdb.cli.formatters.default.YamlFormatter": None,
+        "artifactdb.cli.formatters.default.YamlFormatter": "yaml",
+        "artifactdb.cli.formatters.default.JsonFormatter": "json",
+    })
+
+
+def list_formatter_names():
+    return [i.value for i in load_formatters()]
+
+
+def find_formatter_classpath(name):
+    try:
+        return [i.name for i in load_formatters() if i.value and i.value == name][0]
+    except IndexError:
+        return None
 
 
 ############
@@ -70,10 +86,11 @@ def search_command(
             min=1,
             max=100,
         ),
-        formatter:FORMATS = Option(
-            FORMATS.yaml.value,
+        formatter:str = Option(
+            None,
             help="Formatter name used to display results. Default is to display " + \
                  "all fields, in YAML format. See `formatter` command for more",
+            autocompletion=list_formatter_names,
         ),
     ):
     """
@@ -92,20 +109,20 @@ def search_command(
     if fields:
         fields = list(map(str.strip,fields.split(",")))
 
-    def format_result(doc, console):
-        if formatter.value == "json":
-            dumped = json.dumps(doc,indent=2)
-        else:
-            dumped = yaml.dump(doc)
-        console.print(Syntax(dumped,formatter.value))
+    # load formatter or use default one
+    fmt_class = DEFAULT_FORMATTER_CLASS
+    fmt_classpath = find_formatter_classpath(formatter)
+    if fmt_classpath:
+        fmt_class = get_class_from_classpath(fmt_classpath)
+    fmt = fmt_class()
 
     console = Console()
     count = 0
     found = False
     gen = client.search(query=query,fields=fields,latest=latest)
-    for doc in client.search(query=query,fields=fields,latest=latest):
+    for doc in gen:
         found = True
-        format_result(doc, console)
+        fmt.format_result(doc, console)
         console.print("---")
         count += 1
         if count == size:

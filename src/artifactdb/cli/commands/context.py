@@ -8,9 +8,10 @@ from rich.prompt import Prompt, Confirm
 from rich.syntax import Syntax
 from rich.console import Console
 
+from artifactdb.client.excavator import get_response
 from ..cliutils import get_client, load_config, save_config, MissingArgument, \
                        load_contexts, load_context, ContextNotFound, get_current_context, \
-                       save_context, get_contextual_client
+                       save_context, get_contextual_client, InvalidArgument
 
 
 COMMAND_NAME = "context"
@@ -80,7 +81,7 @@ def create(
             help="URL pointing to the REST API root endpoint"
         ),
         auth_url:str = Option(
-            ...,
+            None,
             help="Keycloak auth URL (contains realm name, eg. `awesome` " + \
                  "https://mykeycloak.mycompany.com/realms/awesome)",
         ),
@@ -126,6 +127,15 @@ def create(
             "What is the name of the context to create? ",
             default=f"{client._name}-{client._env}",
         )
+    if not auth_url:
+        try:
+            primary = client._wellknown["primary"]
+            wellknown = get_response(client._http,"get",primary).json()
+            auth_url = wellknown["issuer"]
+            print(f"Found auth issuer URL {auth_url}")
+        except (AttributeError,KeyError) as e:
+            print("Couldn't not determine authentication issue URL, please provide '--auth-url' argument")
+            raise Abort()
     if not auth_service_account_id:
         auth_client_id,auth_username = collect_auth_username_info(client,auth_client_id,auth_username)
     if not project_prefix:

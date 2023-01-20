@@ -15,6 +15,7 @@ from artifactdb.client.excavator import Excavator, PermissionsInfo
 class MissingArgument(Exception): pass
 class ContextNotFound(Exception): pass
 class InvalidArgument(Exception): pass
+class PluginError(Exception): pass
 
 
 
@@ -198,6 +199,9 @@ def load_plugins(app):
 
 def load_command(app, command_module):
     if hasattr(command_module,"COMMAND_NAME"):
+        if command_module.COMMAND_NAME in [_.name for _ in app.registered_commands]:
+            print(f'[orange3]Unable to load plugin {command_module.__name__!r}, command {command_module.COMMAND_NAME!r} already registered[/orange3]')
+            return
         # one command? TODO: this could also be by convention the function ending in "_command"
         if hasattr(command_module,"COMMAND_FUNC"):
             app.command(

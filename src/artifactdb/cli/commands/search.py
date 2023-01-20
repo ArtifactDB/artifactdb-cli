@@ -57,7 +57,7 @@ def find_formatter_classpath(name):
 def search_command(
         query:str = Argument(
             None,
-            help='ElasticSearch query string. Ex: `path:myfile.txt AND title:"important"'
+            help='ElasticSearch query string. Ex: `path:myfile.txt AND title:"important"`'
         ),
         fields:str = Option(
             None,
@@ -88,8 +88,8 @@ def search_command(
         ),
         formatter:str = Option(
             None,
-            help="Formatter name used to display results. Default is to display " + \
-                 "all fields, in YAML format. See `formatter` command for more",
+            help="Formatter name used to display results. Default is YAML format." + \
+                 "See `formatter` command for more",
             autocompletion=list_formatter_names,
         ),
     ):

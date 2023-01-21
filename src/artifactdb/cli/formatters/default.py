@@ -14,6 +14,7 @@ class YamlFormatter(BaseFormatter):
     def format_result(self, result:dict, console:Console):
         dumped = yaml.dump(result)
         console.print(Syntax(dumped,"yaml"))
+        console.print("---")
 
 
 class JsonFormatter(BaseFormatter):

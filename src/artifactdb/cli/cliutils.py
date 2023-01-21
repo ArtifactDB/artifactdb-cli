@@ -150,6 +150,12 @@ def get_historyfile_path():
     hist_path = pathlib.Path(cfg_folder,hist_file)
     return hist_path
 
+def get_profiles_path():
+    cfg_folder = get_config_directory()
+    prof_file = "profiles"
+    prof_path = pathlib.Path(cfg_folder,prof_file)
+    return prof_path
+
 
 def load_config():
     cfg_path = get_config_path()
@@ -180,6 +186,40 @@ def load_plugins_config():
     except  FileNotFoundError:
         pass
     return plugins
+
+
+def load_search_profiles(name=None):
+    profiles_path = get_profiles_path()
+    try:
+        profiles = yaml.safe_load(open(profiles_path))
+        search_profiles = profiles.get("search",{})
+        if name:
+            return search_profiles.get(name)
+        else:
+            return search_profiles
+    except  FileNotFoundError:
+        return {}
+
+
+def save_search_profile(name, profile):
+    profiles_path = get_profiles_path()
+    try:
+        profiles = yaml.safe_load(open(profiles_path))
+        profiles.setdefault("search",{})
+        profiles["search"][name] = profile
+        yaml.dump(profiles,open(profiles_path,"w"))
+    except  FileNotFoundError:
+        return {}
+
+
+def delete_search_profile(name):
+    profiles_path = get_profiles_path()
+    try:
+        profiles = yaml.safe_load(open(profiles_path))
+        profiles.get("search",{}).pop(name)
+        yaml.dump(profiles,open(profiles_path,"w"))
+    except  FileNotFoundError:
+        return {}
 
 
 def load_plugins(app):

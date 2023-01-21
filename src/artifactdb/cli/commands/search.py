@@ -3,18 +3,20 @@ import enum
 import pathlib
 import datetime
 
-
+import yaml
 import typer
 import dateparser
 from typer import Typer, Argument, Option, Abort, Exit
 from rich import print, print_json
 from rich.prompt import Prompt, Confirm
 from rich.console import Console
+from rich.syntax import Syntax
 
 from artifactdb.utils.misc import get_class_from_classpath
 from artifactdb.cli.formatters.default import YamlFormatter
 from ..cliutils import get_contextual_client, load_current_context, save_context, \
-                       PermissionsInfo, InvalidArgument
+                       PermissionsInfo, InvalidArgument, load_search_profiles, \
+                       save_search_profile, delete_search_profile
 
 
 # single/main command is "upload" with one entrypoint:
@@ -39,7 +41,7 @@ def load_formatters():
     })
 
 
-def list_formatter_names():
+def list_format_names():
     return [i.value for i in load_formatters()]
 
 
@@ -48,6 +50,10 @@ def find_formatter_classpath(name):
         return [i.name for i in load_formatters() if i.value and i.value == name][0]
     except IndexError:
         return None
+
+def get_search_profile_names():
+    profiles = load_search_profiles()
+    return sorted(profiles.keys())
 
 
 ############
@@ -81,21 +87,90 @@ def search_command(
             help="Search for latest versions only",
         ),
         size:int = Option(
-            50,
+            None,
             help="Number of results returned in a page",
             min=1,
             max=100,
         ),
-        formatter:str = Option(
+        format:str = Option(
             None,
-            help="Formatter name used to display results. Default is YAML format." + \
-                 "See `formatter` command for more",
-            autocompletion=list_formatter_names,
+            help="Format used to display results. Default is YAML format.",
+            autocompletion=list_format_names,
+        ),
+        # search profile related options
+        save:str = Option(
+            None,
+            help="Save search parameters in a profile",
+            autocompletion=get_search_profile_names,
+        ),
+        load:str = Option(
+            None,
+            help="Load a saved search profile and use it for search parameters.",
+            autocompletion=get_search_profile_names,
+        ),
+        delete:str = Option(
+            None,
+            help="Delete a search profile",
+            autocompletion=get_search_profile_names,
+        ),
+        ls:bool = Option(
+            False,
+            help="List search profile names and exit.",
+        ),
+        show:str = Option(
+            None,
+            help="Show search profile content and exit.",
+            autocompletion=get_search_profile_names,
+
+        ),
+        verbose:bool = Option(
+            False,
+            help="Print more informational/debug messages",
         ),
     ):
     """
     Searching metadata documents, using active context.
     """
+    console = Console()
+
+    if ls:
+        profiles = get_search_profile_names()
+        console.print(Syntax(yaml.dump(profiles),"yaml"))
+        return
+
+    if show:
+        profile = load_search_profiles(show)
+        if not profile:
+            print(f"[red]No such profile named {show!r}[/red]")
+        else:
+            console.print(Syntax(yaml.dump(profile),"yaml"))
+        return
+
+    if delete:
+        if Confirm.ask(f"Are you sure you want to delete search profile named [orange3]{delete!r}[/orange3]",default="y"):
+            try:
+                delete_search_profile(delete)
+            except KeyError:
+                print(f"[red]No such profile named {delete!r}[/red]")
+        else:
+            raise Abort()
+        return
+
+    profile = {}
+    if load:
+        profile = load_search_profiles(load)
+        if profile and verbose:
+            print(f"Using search profile {load!r}")
+            print(profile)
+        # explicitely passed params have precedence over of the profile ones
+        query = query or profile.get("query")
+        fields = fields or profile.get("fields")
+        project_id = project_id or profile.get("project_id")
+        version = version or profile.get("version")
+        latest = latest or profile.get("latest")
+        size = size or profile.get("size")
+        format = format or profile.get("format")
+
     client = get_contextual_client()
     if query is None:
         query = "*"
@@ -107,23 +182,34 @@ def search_command(
     if version:
         query += f'AND _extra.version:"{version}"'
     if fields:
-        fields = list(map(str.strip,fields.split(",")))
+        fields = list(map(str.strip,fields.split(","))) if isinstance(fields,str) else fields
+    if not size:
+        size = 50
 
     # load formatter or use default one
     fmt_class = DEFAULT_FORMATTER_CLASS
-    fmt_classpath = find_formatter_classpath(formatter)
+    fmt_classpath = find_formatter_classpath(format)
     if fmt_classpath:
         fmt_class = get_class_from_classpath(fmt_classpath)
     fmt = fmt_class()
 
-    console = Console()
+    if save:
+        save_search_profile(save,{
+            "query": query,
+            "fields": fields,
+            "project_id": project_id,
+            "version": version,
+            "latest": latest,
+            "size": size,
+            "format": format,
+        })
+
     count = 0
     found = False
     gen = client.search(query=query,fields=fields,latest=latest)
     for doc in gen:
         found = True
         fmt.format_result(doc, console)
-        console.print("---")
         count += 1
         if count == size:
             if Confirm.ask("More",default="y"):

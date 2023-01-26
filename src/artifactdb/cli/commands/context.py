@@ -9,9 +9,19 @@ from rich.syntax import Syntax
 from rich.console import Console
 
 from artifactdb.client.excavator import get_response
-from ..cliutils import get_client, load_config, save_config, MissingArgument, \
-                       load_contexts, load_context, ContextNotFound, get_current_context, \
-                       save_context, get_contextual_client, InvalidArgument
+from ..cliutils import (
+    get_client,
+    load_config,
+    save_config,
+    MissingArgument,
+    load_contexts,
+    load_context,
+    ContextNotFound,
+    get_current_context,
+    save_context,
+    get_contextual_client,
+    InvalidArgument,
+)
 
 
 COMMAND_NAME = "context"
@@ -21,9 +31,11 @@ app = Typer(help="Manage ArtifactDB contexts (connections, clients, ...)")
 # UTILS #
 #########
 
+
 def list_context_names():
     contexts = load_contexts()
     return sorted([ctx["name"] for ctx in contexts if ctx.get("name")])
+
 
 def display_context(name=None, context=None):
     if context is None:
@@ -31,7 +43,7 @@ def display_context(name=None, context=None):
         context = load_context(name)
     assert context, f"Couldn't find context named {name!r}"
     console = Console()
-    console.print(Syntax(yaml.dump(context),"yaml"))
+    console.print(Syntax(yaml.dump(context), "yaml"))
 
 
 def set_current_context(name):
@@ -43,7 +55,7 @@ def set_current_context(name):
 
 def collect_auth_username_info(adb_client, auth_client_id, auth_username):
     main_client = adb_client._auth_clients.get("main")
-    other_clients = adb_client._auth_clients.get("others",[])
+    other_clients = adb_client._auth_clients.get("others", [])
     all_clients = []
     # trigger default value in the prompt, only if we have amin_client defined,
     # otherwise we end up with an empty client_id
@@ -74,50 +86,49 @@ def collect_auth_username_info(adb_client, auth_client_id, auth_username):
 # COMMANDS #
 ############
 
+
 @app.command()
 def create(
-        url:str = Argument(
-            ...,
-            help="URL pointing to the REST API root endpoint"
-        ),
-        auth_url:str = Option(
-            None,
-            help="Keycloak auth URL (contains realm name, eg. `awesome` " + \
-                 "https://mykeycloak.mycompany.com/realms/awesome)",
-        ),
-        name:str = Option(
-            None,
-            help="Context name. The instance name (if exposed) is used by default to name the context",
-        ),
-        auth_client_id:str = Option(
-            None,
-            help="Client ID used for authentication. The instance's main client ID (if exposed) is used by default",
-        ),
-        auth_username:str = Option(
-            None,
-            help="Username used in authentication, default to `whoami`"
-        ),
-        project_prefix:str = Option(
-            None,
-            help="Project prefix used in that context. If the instance exposes that information, " + \
-                 "a selection can be made, otherwise, the instance's default is used",
-        ),
-        auth_service_account_id:str =  Option(
-            None,
-            help="Create a context for a service account, instead of current user",
-        ),
-        force:bool = Option(
-            False,
-            help="Don't ask for confirmation before creating the context",
-        ),
-    ):
+    url: str = Argument(..., help="URL pointing to the REST API root endpoint"),
+    auth_url: str = Option(
+        None,
+        help="Keycloak auth URL (contains realm name, eg. `awesome` "
+        + "https://mykeycloak.mycompany.com/realms/awesome)",
+    ),
+    name: str = Option(
+        None,
+        help="Context name. The instance name (if exposed) is used by default to name the context",
+    ),
+    auth_client_id: str = Option(
+        None,
+        help="Client ID used for authentication. The instance's main client ID (if exposed) is used by default",
+    ),
+    auth_username: str = Option(
+        None, help="Username used in authentication, default to `whoami`"
+    ),
+    project_prefix: str = Option(
+        None,
+        help="Project prefix used in that context. If the instance exposes that information, "
+        + "a selection can be made, otherwise, the instance's default is used",
+    ),
+    auth_service_account_id: str = Option(
+        None,
+        help="Create a context for a service account, instead of current user",
+    ),
+    force: bool = Option(
+        False,
+        help="Don't ask for confirmation before creating the context",
+    ),
+):
     """
     Create a new ArtifactDB context with connection details.
     """
     # for now, we support end-user and svc account auth, exclusive
     if (auth_client_id or auth_username) and auth_service_account_id:
-        print("[red] Option --auth-service-account-id can be used with -auth-client-id or --auth-username, " + \
-              "choose either service account or end-user authentication")
+        print(
+            "[red] Option --auth-service-account-id can be used with -auth-client-id or --auth-username, "
+            + "choose either service account or end-user authentication"
+        )
         raise Exit(code=2)
     # collect/determine context info
     client = get_client(url)
@@ -130,18 +141,24 @@ def create(
     if not auth_url:
         try:
             primary = client._wellknown["primary"]
-            wellknown = get_response(client._http,"get",primary).json()
+            wellknown = get_response(client._http, "get", primary).json()
             auth_url = wellknown["issuer"]
             print(f"Found auth issuer URL {auth_url}")
-        except (AttributeError,KeyError) as e:
-            print("Couldn't not determine authentication issue URL, please provide '--auth-url' argument")
+        except (AttributeError, KeyError) as e:
+            print(
+                "Couldn't not determine authentication issue URL, please provide '--auth-url' argument"
+            )
             raise Abort()
     if not auth_service_account_id:
-        auth_client_id,auth_username = collect_auth_username_info(client,auth_client_id,auth_username)
+        auth_client_id, auth_username = collect_auth_username_info(
+            client, auth_client_id, auth_username
+        )
     if not project_prefix:
         if not client._sequences:
-            print("ArtifactDB instance didn't provide project prefix information, will use default one " + \
-                   "(or use --project-prefix option to specify another one)")
+            print(
+                "ArtifactDB instance didn't provide project prefix information, will use default one "
+                + "(or use --project-prefix option to specify another one)"
+            )
         else:
             default_prefix = None
             prefixes = []
@@ -150,9 +167,7 @@ def create(
                 if seq["default"]:
                     default_prefix = seq["prefix"]
             project_prefix = Prompt.ask(
-                "Select a project prefix: ",
-                choices=prefixes,
-                default=default_prefix
+                "Select a project prefix: ", choices=prefixes, default=default_prefix
             )
 
     try:
@@ -182,10 +197,9 @@ def create(
         confirmed = Confirm.ask("Confirm creation?")
         if not confirmed:
             raise Abort()
-    save_context(name=ctx_name,context=ctx,overwrite=True)
+    save_context(name=ctx_name, context=ctx, overwrite=True)
     # check we can create a client
     _ = get_contextual_client(name=ctx_name)
-
 
 
 @app.command()
@@ -196,12 +210,12 @@ def list():
 
 @app.command()
 def show(
-        name:str = Argument(
-            None,
-            help="Context name (or current one if not specified)",
-            autocompletion=list_context_names,
-        ),
-    ):
+    name: str = Argument(
+        None,
+        help="Context name (or current one if not specified)",
+        autocompletion=list_context_names,
+    ),
+):
     """Show ArtifactDB context details"""
     if name is None:
         name = get_current_context()
@@ -210,15 +224,13 @@ def show(
 
 @app.command()
 def use(
-        name:str = Argument(
-            ...,
-            help="Context name",
-            autocompletion=list_context_names,
-        ),
-    ):
+    name: str = Argument(
+        ...,
+        help="Context name",
+        autocompletion=list_context_names,
+    ),
+):
     """Set given context as current one"""
     set_current_context(name)
     ctx = load_context(name)
     print(f"Switched to context {name!r}: [blue3]{ctx['url']}[/blue3]")
-
-

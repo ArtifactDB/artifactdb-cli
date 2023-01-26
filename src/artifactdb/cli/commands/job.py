@@ -11,29 +11,57 @@ from rich.prompt import Prompt, Confirm
 from rich.syntax import Syntax
 from rich.console import Console
 
-from ..cliutils import get_contextual_client, load_config, save_config, MissingArgument, \
-                       load_contexts, load_context, ContextNotFound, load_current_context, \
-                       InvalidArgument, save_context
+from ..cliutils import (
+    get_contextual_client,
+    load_config,
+    save_config,
+    MissingArgument,
+    load_contexts,
+    load_context,
+    ContextNotFound,
+    load_current_context,
+    InvalidArgument,
+    save_context,
+)
 
 
 COMMAND_NAME = "job"
 app = Typer(help="Manage jobs (indexing, ...)")
 
-FORMATS = enum.Enum("format",{k:v for k,v in (("json","json"),("yaml","yaml"),("human","human"))})
-JOB_STATUS = enum.Enum("status",{k:k for k in ("terminated","success","failure","pending","none","all","purged")})
+FORMATS = enum.Enum(
+    "format",
+    {k: v for k, v in (("json", "json"), ("yaml", "yaml"), ("human", "human"))},
+)
+JOB_STATUS = enum.Enum(
+    "status",
+    {
+        k: k
+        for k in (
+            "terminated",
+            "success",
+            "failure",
+            "pending",
+            "none",
+            "all",
+            "purged",
+        )
+    },
+)
 
 #########
 # UTILS #
 #########
 
-class PurgedJobError(Exception): pass
+
+class PurgedJobError(Exception):
+    pass
 
 
 def load_current_jobs():
     ctx = load_current_context()
     # backward compat
     jobs = []
-    for job in ctx.get("jobs",[]):
+    for job in ctx.get("jobs", []):
         fixedjob = job
         if not "job" in job:
             fixedjob = {
@@ -63,7 +91,7 @@ def create_job(job_id):
     Mimic the creation of a job record to allow checking on job
     not part of the current context
     """
-    ctx = load_current_context() 
+    ctx = load_current_context()
     return {
         "job": {
             "job_id": job_id,
@@ -94,13 +122,15 @@ def display_job_status(job_status, format=None, verbose=False):
         elif job_status["status"] == "RUNNING":
             status_icon = ":orange_circle: Running"
         print(status_icon)
-        if job_status["status"] in ("SUCCESS","FAILURE"):
+        if job_status["status"] in ("SUCCESS", "FAILURE"):
             # drop result, indented (padding-left)
-            console.print(Syntax(yaml.dump(job_status["result"]),"yaml",padding=(0,1)))
+            console.print(
+                Syntax(yaml.dump(job_status["result"]), "yaml", padding=(0, 1))
+            )
         if verbose and job_status["status"] == "FAILURE":
-            console.print(Syntax(job_status["traceback"],"python",padding=(0,1)))
+            console.print(Syntax(job_status["traceback"], "python", padding=(0, 1)))
     else:
-        console.print(Syntax(job_status,format))
+        console.print(Syntax(job_status, format))
 
 
 def is_job_prunable(job_status, prunable_state):
@@ -109,51 +139,59 @@ def is_job_prunable(job_status, prunable_state):
     if prunable_state.value == "all":
         return True
     state = job_status["status"].lower()
-    terminated = state in ("success","failure")
-    if terminated and prunable_state.value == "terminated" or \
-            prunable_state.value == state:
+    terminated = state in ("success", "failure")
+    if (
+        terminated
+        and prunable_state.value == "terminated"
+        or prunable_state.value == state
+    ):
         return True
 
 
 def save_current_context_jobs(jobs):
-    ctx = load_current_context() 
+    ctx = load_current_context()
     ctx["jobs"] = jobs
-    save_context(name=ctx["name"],context=ctx,overwrite=True,quiet=True)
+    save_context(name=ctx["name"], context=ctx, overwrite=True, quiet=True)
 
 
-def process_check_job(job, client,format,prune,verbose,updated_jobs):
+def process_check_job(job, client, format, prune, verbose, updated_jobs):
     status = client.get_job_status(job["job"]["job_url"])
     # normalize to dict (error'd job are not parsed properly by models)
-    if not isinstance(status,dict):
+    if not isinstance(status, dict):
         status = json.loads(status.json())
     if format:
-        if not isinstance(format,str):
+        if not isinstance(format, str):
             format = format.value
     format = None if format == "human" else format
     job["job"]["status"] = status["status"]
     try:
-        display_job_status(status,format=format,verbose=verbose)
+        display_job_status(status, format=format, verbose=verbose)
     except PurgedJobError:
-        print(f"Job [red]{job['job']['job_id']}[/red] was purged and is not available anymore")
+        print(
+            f"Job [red]{job['job']['job_id']}[/red] was purged and is not available anymore"
+        )
         # overwrite/normalize status value to decide further down if purgable or not
         status["status"] = "purged"
     # skip job if its state does not require to be pruned
     updated_jobs.append(job)
-    if is_job_prunable(status,prune):
+    if is_job_prunable(status, prune):
         updated_jobs.pop()
 
     return updated_jobs
 
+
 def check_all_jobs(jobs, client, format, prune, verbose):
     updated_jobs = []
     for job in jobs:
-        process_check_job(job,client,format,prune,verbose,updated_jobs=updated_jobs)
+        process_check_job(
+            job, client, format, prune, verbose, updated_jobs=updated_jobs
+        )
     save_current_context_jobs(updated_jobs)
 
 
 def check_one_job(job, client, format, prune, verbose):
     updated_jobs = []
-    process_check_job(job,client,format,prune,verbose,updated_jobs)
+    process_check_job(job, client, format, prune, verbose, updated_jobs)
     if updated_jobs:
         assert len(updated_jobs) == 1
         updated = updated_jobs.pop()
@@ -186,54 +224,56 @@ def check_one_job(job, client, format, prune, verbose):
             save_current_context_jobs(jobs)
 
 
-
 ############
 # COMMANDS #
 ############
 
+
 @app.command()
 def list(
-        verbose:bool = Option(
-            False,
-            help="Print all jobs information",
-        ),
-    ):
+    verbose: bool = Option(
+        False,
+        help="Print all jobs information",
+    ),
+):
     """
     List all jobs recorded in current context, with last checked status.
     """
     jobs = load_current_jobs()
     # remove unnecessary details
     if not verbose:
-        for key in ("path","job_url",):
-            [_["job"].pop(key,None) for _ in jobs]
+        for key in (
+            "path",
+            "job_url",
+        ):
+            [_["job"].pop(key, None) for _ in jobs]
     if jobs:
-        jobs.sort(key=lambda e: e.get("created_at",datetime.datetime.fromtimestamp(0)))
+        jobs.sort(key=lambda e: e.get("created_at", datetime.datetime.fromtimestamp(0)))
         console = Console()
-        console.print(Syntax(yaml.dump(jobs),"yaml"))
+        console.print(Syntax(yaml.dump(jobs), "yaml"))
     else:
         print("No jobs recorded in current context, nothing to list")
 
 
 @app.command()
 def check(
-        job_id:str = Argument(
-            None,
-            help="Job ID (all jobs checked if omitted). Job ID can be one recorded in the context, or a manual entry.",
-            autocompletion=list_job_ids,
-        ),
-        format:FORMATS = Option(
-            FORMATS.human.value,
-            help="Return job status in specified format, default is human-readable",
-        ),
-        prune:JOB_STATUS = Option(
-            JOB_STATUS.success.value,
-            help="Prune jobs with given status after reporting it",
-        ),
-        verbose:bool = Option(
-            False,
-            help="Display additional information about jobs (eg. traceback, etc...)"
-        ),
-    ):
+    job_id: str = Argument(
+        None,
+        help="Job ID (all jobs checked if omitted). Job ID can be one recorded in the context, or a manual entry.",
+        autocompletion=list_job_ids,
+    ),
+    format: FORMATS = Option(
+        FORMATS.human.value,
+        help="Return job status in specified format, default is human-readable",
+    ),
+    prune: JOB_STATUS = Option(
+        JOB_STATUS.success.value,
+        help="Prune jobs with given status after reporting it",
+    ),
+    verbose: bool = Option(
+        False, help="Display additional information about jobs (eg. traceback, etc...)"
+    ),
+):
     """
     Using active context, check status for all jobs, or given job ID. Jobs statuses are updated each they're checked.
     """
@@ -246,6 +286,6 @@ def check(
         raise Exit(0)
     client = get_contextual_client()
     if requested_job:
-        check_one_job(requested_job,client,format,prune,verbose)
+        check_one_job(requested_job, client, format, prune, verbose)
     else:
-        check_all_jobs(jobs,client,format,prune,verbose)
+        check_all_jobs(jobs, client, format, prune, verbose)

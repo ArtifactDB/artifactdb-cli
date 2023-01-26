@@ -19,6 +19,7 @@ app = Typer(help="ArtifactDB shell")
 # COMMANDS #
 ############
 
+
 @app.command()
 def shell_command(ctx: Context):
     """
@@ -29,7 +30,10 @@ def shell_command(ctx: Context):
     # I wasn't able to fix the issue when using shell+prompt, but at least, shell
     # doesn't pollute the CLI when not using it
     from click_shell import make_click_shell
-    print(":classical_building:  Welcome to the [bright_black]ArtifactDB shell[/bright_black], type `help` for available commands")
+
+    print(
+        ":classical_building:  Welcome to the [bright_black]ArtifactDB shell[/bright_black], type `help` for available commands"
+    )
     adbctx = load_current_context()
     print(f"Active context {adbctx['name']!r}: [blue3]{adbctx['url']}[/blue3]")
     shell = make_click_shell(
@@ -40,4 +44,3 @@ def shell_command(ctx: Context):
         hist_file=get_historyfile_path(),
     )
     shell.cmdloop()
-

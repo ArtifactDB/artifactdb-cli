@@ -12,27 +12,40 @@ from artifactdb.identifiers.aid import unpack_id, MalformedID
 from artifactdb.client.excavator import Excavator, PermissionsInfo
 
 
-class MissingArgument(Exception): pass
-class ContextNotFound(Exception): pass
-class InvalidArgument(Exception): pass
-class PluginError(Exception): pass
+class MissingArgument(Exception):
+    pass
 
+
+class ContextNotFound(Exception):
+    pass
+
+
+class InvalidArgument(Exception):
+    pass
+
+
+class PluginError(Exception):
+    pass
 
 
 def get_client(url, *args, **kwargs):
-    return Excavator(url,*args,**kwargs)
+    return Excavator(url, *args, **kwargs)
 
 
 def build_auth(auth_info):
     url = auth_info["url"]
     if "/realms" in url:
-        parts = url.rsplit("/",2)
+        parts = url.rsplit("/", 2)
         if len(parts) != 3 or parts[-2] != "realms":
-            raise InvalidArgument("Auth. URL not properly formatted, can't extract realm")
+            raise InvalidArgument(
+                "Auth. URL not properly formatted, can't extract realm"
+            )
         realm_name = parts[-1]
         url = parts[0]
     else:
-        raise InvalidArgument("Auth. URL must contain the ream name in the path (.../realms/<name>)")
+        raise InvalidArgument(
+            "Auth. URL must contain the ream name in the path (.../realms/<name>)"
+        )
     auth_kwargs = {
         "server_url": url,
         "realm": realm_name,
@@ -58,7 +71,7 @@ def build_auth(auth_info):
         return harpocrates.Authenticate(**auth_kwargs)
 
 
-def get_contextual_client(name=None,**kwargs):
+def get_contextual_client(name=None, **kwargs):
     ctx = load_current_context() if name is None else load_context(name)
     auth = build_auth(ctx["auth"])
     client = get_client(
@@ -99,9 +112,9 @@ def save_context(name, context, overwrite=False, quiet=False):
     # no matter what, try to find one with the same name to remove it
     contexts = load_contexts()
     idx = None
-    for i,ctx in enumerate(contexts):
+    for i, ctx in enumerate(contexts):
         if ctx["name"] == name:
-            idx= i
+            idx = i
             break
     if not idx is None:
         contexts.pop(idx)
@@ -109,8 +122,6 @@ def save_context(name, context, overwrite=False, quiet=False):
     cfg = load_config()
     cfg["contexts"] = contexts
     save_config(cfg)
-
-
 
 
 def load_current_context():
@@ -133,27 +144,28 @@ def get_config_directory():
 def get_config_path():
     cfg_folder = get_config_directory()
     cfg_file = "config"  # TODO: we could have multiple config files
-    cfg_path = pathlib.Path(cfg_folder,cfg_file)
+    cfg_path = pathlib.Path(cfg_folder, cfg_file)
     return cfg_path
 
 
 def get_plugins_path():
     cfg_folder = get_config_directory()
     plugins_file = "plugins"
-    plugins_path = pathlib.Path(cfg_folder,plugins_file)
+    plugins_path = pathlib.Path(cfg_folder, plugins_file)
     return plugins_path
 
 
 def get_historyfile_path():
     cfg_folder = get_config_directory()
     hist_file = "history"
-    hist_path = pathlib.Path(cfg_folder,hist_file)
+    hist_path = pathlib.Path(cfg_folder, hist_file)
     return hist_path
+
 
 def get_profiles_path():
     cfg_folder = get_config_directory()
     prof_file = "profiles"
-    prof_path = pathlib.Path(cfg_folder,prof_file)
+    prof_path = pathlib.Path(cfg_folder, prof_file)
     return prof_path
 
 
@@ -161,11 +173,11 @@ def load_config():
     cfg_path = get_config_path()
     try:
         cfg = yaml.safe_load(open(cfg_path))
-    except  FileNotFoundError:
+    except FileNotFoundError:
         print(f"No existing configuration file found at '{cfg_path}', creating one")
-        cfg = {"contexts": [],"last-modification": datetime.datetime.now().isoformat()}
-        cfg_path.parent.mkdir(parents=True,exist_ok=True)
-        yaml.dump(cfg,open(cfg_path,"w"))
+        cfg = {"contexts": [], "last-modification": datetime.datetime.now().isoformat()}
+        cfg_path.parent.mkdir(parents=True, exist_ok=True)
+        yaml.dump(cfg, open(cfg_path, "w"))
     if not "current-context" in cfg:
         cfg["current-context"] = None
 
@@ -174,7 +186,7 @@ def load_config():
 
 def save_config(cfg):
     cfg_path = get_config_path()
-    yaml.dump(cfg,open(cfg_path,"w"))
+    yaml.dump(cfg, open(cfg_path, "w"))
 
 
 def load_plugins_config():
@@ -183,7 +195,7 @@ def load_plugins_config():
     plugins = {"plugins": []}
     try:
         plugins = yaml.safe_load(open(plugins_path))
-    except  FileNotFoundError:
+    except FileNotFoundError:
         pass
     return plugins
 
@@ -192,12 +204,12 @@ def load_search_profiles(name=None):
     profiles_path = get_profiles_path()
     try:
         profiles = yaml.safe_load(open(profiles_path))
-        search_profiles = profiles.get("search",{})
+        search_profiles = profiles.get("search", {})
         if name:
             return search_profiles.get(name)
         else:
             return search_profiles
-    except  FileNotFoundError:
+    except FileNotFoundError:
         return {}
 
 
@@ -205,10 +217,10 @@ def save_search_profile(name, profile):
     profiles_path = get_profiles_path()
     try:
         profiles = yaml.safe_load(open(profiles_path))
-        profiles.setdefault("search",{})
+        profiles.setdefault("search", {})
         profiles["search"][name] = profile
-        yaml.dump(profiles,open(profiles_path,"w"))
-    except  FileNotFoundError:
+        yaml.dump(profiles, open(profiles_path, "w"))
+    except FileNotFoundError:
         return {}
 
 
@@ -216,9 +228,9 @@ def delete_search_profile(name):
     profiles_path = get_profiles_path()
     try:
         profiles = yaml.safe_load(open(profiles_path))
-        profiles.get("search",{}).pop(name)
-        yaml.dump(profiles,open(profiles_path,"w"))
-    except  FileNotFoundError:
+        profiles.get("search", {}).pop(name)
+        yaml.dump(profiles, open(profiles_path, "w"))
+    except FileNotFoundError:
         return {}
 
 
@@ -232,26 +244,25 @@ def load_plugins(app):
         cmds_mod_path = plugin_cfg["module"] + ".commands"  # by plugins dev convention
         try:
             mod = importlib.import_module(cmds_mod_path)
-            load_commands(app,mod)
+            load_commands(app, mod)
         except (ModuleNotFoundError, ImportError) as exc:
             print(f"[red]Unable to load plugin {name!r}: {exc}")
 
 
 def load_command(app, command_module):
-    if hasattr(command_module,"COMMAND_NAME"):
+    if hasattr(command_module, "COMMAND_NAME"):
         if command_module.COMMAND_NAME in [_.name for _ in app.registered_commands]:
-            print(f'[orange3]Unable to load plugin {command_module.__name__!r}, command {command_module.COMMAND_NAME!r} already registered[/orange3]')
+            print(
+                f"[orange3]Unable to load plugin {command_module.__name__!r}, command {command_module.COMMAND_NAME!r} already registered[/orange3]"
+            )
             return
         # one command? TODO: this could also be by convention the function ending in "_command"
-        if hasattr(command_module,"COMMAND_FUNC"):
-            app.command(
-                name=command_module.COMMAND_NAME
-            )(getattr(command_module,command_module.COMMAND_FUNC))
-        else:
-            app.add_typer(
-                command_module.app,
-                name=command_module.COMMAND_NAME
+        if hasattr(command_module, "COMMAND_FUNC"):
+            app.command(name=command_module.COMMAND_NAME)(
+                getattr(command_module, command_module.COMMAND_FUNC)
             )
+        else:
+            app.add_typer(command_module.app, name=command_module.COMMAND_NAME)
     else:
         # not containing a command
         return
@@ -266,14 +277,16 @@ def load_commands(app, commands_module):
             cmd_mod_path = f"{commands_module.__name__}.{filepath.stem}"
             try:
                 cmd_mod = importlib.import_module(cmd_mod_path)
-                load_command(app,cmd_mod)
+                load_command(app, cmd_mod)
             except (ModuleNotFoundError, ImportError) as exc:
                 print(f"[red]Unable to load plugin {name!r}: {exc}")
 
 
 def parse_artifactdb_notation(what, project_id, version, id):
     if what and (project_id or version or id):
-        print("Option '--project-id', '--version' or '--id' cannot be used in addition to the [what] parameter")
+        print(
+            "Option '--project-id', '--version' or '--id' cannot be used in addition to the [what] parameter"
+        )
         raise Exit(4)
     if (project_id or version) and id:
         print("Option '--id' cannot be used with options '--project-id' or '--version'")
@@ -293,17 +306,19 @@ def parse_artifactdb_notation(what, project_id, version, id):
         # then what is it?
         try:
             ids = unpack_id(what)
-            project_id,version,path = ids["project_id"],ids["version"],ids["path"]
+            project_id, version, path = ids["project_id"], ids["version"], ids["path"]
         except MalformedID:
             # not an ArtifactDB ID
             if "@" in what:
                 try:
-                    project_id,version = tuple(map(str.strip,what.split("@")))
+                    project_id, version = tuple(map(str.strip, what.split("@")))
                 except ValueError:
                     raise InvalidArgument(f"Unable to parse {what!r}")
             else:
-                raise InvalidArgument("Download a project without a version number is not supported at the moment.")
-                project_id,version = what,"latest"
+                raise InvalidArgument(
+                    "Download a project without a version number is not supported at the moment."
+                )
+                project_id, version = what, "latest"
 
     # sanity checks
     if not project_id or not version:
@@ -316,4 +331,4 @@ def parse_artifactdb_notation(what, project_id, version, id):
     if version.lower() == "latest":
         raise InvalidArgument("`latest` is not supported at the moment")
 
-    return project_id,version,path
+    return project_id, version, path

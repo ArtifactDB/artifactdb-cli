@@ -12,10 +12,10 @@ import artifactdb.cli.commands
 
 app = Typer()
 # direct/core commands
-load_commands(app,artifactdb.cli.commands)
+load_commands(app, artifactdb.cli.commands)
 # load optional plugins
 load_plugins(app)
 
+
 def run():
     app()
-

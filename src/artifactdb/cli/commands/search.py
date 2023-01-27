@@ -172,14 +172,19 @@ def search_command(
     profile = {}
     if load:
         profile = load_search_profiles(load)
-        if profile and verbose:
-            print(f"Using search profile {load!r}")
-            print(profile)
+        if profile:
+            if verbose:
+                print(f"Using search profile {load!r}")
+        else:
+            print(f"No such search profile named [red]{load!r}[/red]")
+            raise Abort()
         # explicitely passed params have precedence over of the profile ones
         query = query or profile.get("query")
         fields = fields or profile.get("fields")
         project_id = project_id or profile.get("project_id")
         version = version or profile.get("version")
+        # TODO: if latest=true in profile, we can't override the search with latest=false, it's
+        # always taken from the profile...
         latest = latest or profile.get("latest")
         size = size or profile.get("size")
         format = format or profile.get("format")
@@ -191,9 +196,9 @@ def search_command(
     if version and latest:
         print("[orange]Using `version` with `latest` arguments is not recommended")
     if project_id:
-        query += f'AND _extra.project_id:"{project_id}"'
+        query += f' AND _extra.project_id:"{project_id}"'
     if version:
-        query += f'AND _extra.version:"{version}"'
+        query += f' AND _extra.version:"{version}"'
     if fields:
         fields = (
             list(map(str.strip, fields.split(",")))

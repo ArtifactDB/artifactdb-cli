@@ -2,7 +2,7 @@ from typer import Typer, Context
 from rich import print, print_json
 from rich.console import Console
 
-from ..cliutils import get_historyfile_path, load_current_context
+from ..cliutils import get_historyfile_path, load_current_context, ContextNotFound
 
 
 COMMAND_NAME = "shell"
@@ -19,7 +19,6 @@ app = Typer(help="ArtifactDB shell")
 # COMMANDS #
 ############
 
-
 @app.command()
 def shell_command(ctx: Context):
     """
@@ -34,8 +33,14 @@ def shell_command(ctx: Context):
     print(
         ":classical_building:  Welcome to the [bright_black]ArtifactDB shell[/bright_black], type `help` for available commands"
     )
-    adbctx = load_current_context()
-    print(f"Active context {adbctx['name']!r}: [blue3]{adbctx['url']}[/blue3]")
+    try:
+        adbctx = load_current_context()
+        print(f"Active context {adbctx['name']!r}: [blue3]{adbctx['url']}[/blue3]")
+    except ContextNotFound:
+        print("[orange3]No active context found[/orange3].")
+        print("To list available contexts, use [bright_black]context list[/bright_black]")
+        print("To point to an existing one with [bright_black]context use[/bright_black]")
+        print("To create a new one with [bright_black]context create[/bright_black]")
     shell = make_click_shell(
         # ctx.parent represents (I think) the context containing the adb CLI and all the commands
         # which is what click-shell wants (multi-commands context)

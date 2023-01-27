@@ -28,6 +28,10 @@ class PluginError(Exception):
     pass
 
 
+class SearchProfileError(Exception):
+    pass
+
+
 def get_client(url, *args, **kwargs):
     return Excavator(url, *args, **kwargs)
 
@@ -200,38 +204,42 @@ def load_plugins_config():
     return plugins
 
 
-def load_search_profiles(name=None):
+def load_search_profiles_file():
     profiles_path = get_profiles_path()
     try:
         profiles = yaml.safe_load(open(profiles_path))
-        search_profiles = profiles.get("search", {})
-        if name:
-            return search_profiles.get(name)
-        else:
-            return search_profiles
+        if not isinstance(profiles,dict):
+            raise SearchProfileError(f"Search profiles file at {profiles_path!r} seems corrupted, expecting a dict")
     except FileNotFoundError:
-        return {}
+        profiles = {}  # first time, no profiles saved yet
+    return profiles
+
+
+def save_search_profiles_file(profiles):
+    profiles_path = get_profiles_path()
+    yaml.dump(profiles, open(profiles_path, "w"))
+
+
+def load_search_profiles(name=None):
+    profiles = load_search_profiles_file()
+    search_profiles = profiles.get("search", {})
+    if name:
+        return search_profiles.get(name)
+    else:
+        return search_profiles
 
 
 def save_search_profile(name, profile):
-    profiles_path = get_profiles_path()
-    try:
-        profiles = yaml.safe_load(open(profiles_path))
-        profiles.setdefault("search", {})
-        profiles["search"][name] = profile
-        yaml.dump(profiles, open(profiles_path, "w"))
-    except FileNotFoundError:
-        return {}
+    profiles = load_search_profiles_file()
+    profiles.setdefault("search", {})
+    profiles["search"][name] = profile
+    save_search_profiles_file(profiles)
 
 
 def delete_search_profile(name):
-    profiles_path = get_profiles_path()
-    try:
-        profiles = yaml.safe_load(open(profiles_path))
-        profiles.get("search", {}).pop(name)
-        yaml.dump(profiles, open(profiles_path, "w"))
-    except FileNotFoundError:
-        return {}
+    profiles = load_search_profiles_file()
+    profiles.get("search", {}).pop(name)
+    save_search_profiles_file(profiles)
 
 
 def load_plugins(app):

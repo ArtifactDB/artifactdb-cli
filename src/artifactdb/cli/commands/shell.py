@@ -19,6 +19,7 @@ app = Typer(help="ArtifactDB shell")
 # COMMANDS #
 ############
 
+
 @app.command()
 def shell_command(ctx: Context):
     """
@@ -38,8 +39,12 @@ def shell_command(ctx: Context):
         print(f"Active context {adbctx['name']!r}: [blue3]{adbctx['url']}[/blue3]")
     except ContextNotFound:
         print("[orange3]No active context found[/orange3].")
-        print("To list available contexts, use [bright_black]context list[/bright_black]")
-        print("To point to an existing one with [bright_black]context use[/bright_black]")
+        print(
+            "To list available contexts, use [bright_black]context list[/bright_black]"
+        )
+        print(
+            "To point to an existing one with [bright_black]context use[/bright_black]"
+        )
         print("To create a new one with [bright_black]context create[/bright_black]")
     shell = make_click_shell(
         # ctx.parent represents (I think) the context containing the adb CLI and all the commands

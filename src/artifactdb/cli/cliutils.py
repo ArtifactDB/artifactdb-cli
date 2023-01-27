@@ -208,8 +208,10 @@ def load_search_profiles_file():
     profiles_path = get_profiles_path()
     try:
         profiles = yaml.safe_load(open(profiles_path))
-        if not isinstance(profiles,dict):
-            raise SearchProfileError(f"Search profiles file at {profiles_path!r} seems corrupted, expecting a dict")
+        if not isinstance(profiles, dict):
+            raise SearchProfileError(
+                f"Search profiles file at {profiles_path!r} seems corrupted, expecting a dict"
+            )
     except FileNotFoundError:
         profiles = {}  # first time, no profiles saved yet
     return profiles

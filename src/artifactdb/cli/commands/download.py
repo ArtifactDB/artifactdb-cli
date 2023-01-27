@@ -134,6 +134,13 @@ def download_command(
     Download artifacts.
     """
     project_id, version, path = parse_artifactdb_notation(what, project_id, version, id)
+    if version is None:
+        raise InvalidArgument(
+            "Download a project without a version number is not supported at the moment."
+        )
+    if version.lower() == "latest":
+        raise InvalidArgument("`latest` is not supported at the moment")
+
     print("project_id: %s" % project_id)
     print("version: %s" % version)
     print("path: %s" % path)

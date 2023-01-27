@@ -244,6 +244,18 @@ def delete_search_profile(name):
     save_search_profiles_file(profiles)
 
 
+def register_job(project_id, version, status):
+    ctx = load_current_context()
+    ctx.setdefault("jobs", []).append(
+        {
+            "project_id": project_id,
+            "version": version,
+            "created_at": datetime.datetime.now().isoformat(),
+            "job": status,
+        }
+    )
+    save_context(name=ctx["name"], context=ctx, overwrite=True)
+
 def load_plugins(app):
     plugins_cfgs = load_plugins_config()
     for plugin_cfg in plugins_cfgs["plugins"]:
@@ -308,8 +320,8 @@ def parse_artifactdb_notation(what, project_id, version, id):
         what = f"{project_id}@{version}"
     elif project_id:
         what = project_id
-    else:
-        assert what, "Unexpected error while parsing arguments..."
+    elif not what:
+        raise MissingArgument()
 
     path = None
     if what:
@@ -325,20 +337,14 @@ def parse_artifactdb_notation(what, project_id, version, id):
                 except ValueError:
                     raise InvalidArgument(f"Unable to parse {what!r}")
             else:
-                raise InvalidArgument(
-                    "Download a project without a version number is not supported at the moment."
-                )
-                project_id, version = what, "latest"
+                project_id, version = what, None
 
     # sanity checks
-    if not project_id or not version:
+    if not project_id and not version:
         raise InvalidArgument("Unable to determine a project ID and version")
     if version == '""':  # we ended up with an empty string
         raise InvalidArgument("Unable to determine a version")
     if ":" in project_id:
         raise InvalidArgument(f"Invalid project ID {project_id!r} (`:` not allowed)")
-
-    if version.lower() == "latest":
-        raise InvalidArgument("`latest` is not supported at the moment")
 
     return project_id, version, path

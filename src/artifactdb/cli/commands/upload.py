@@ -20,6 +20,7 @@ from ..cliutils import (
     get_contextual_client,
     load_current_context,
     save_context,
+    register_job,
     PermissionsInfo,
     InvalidArgument,
 )
@@ -216,15 +217,6 @@ def upload_command(
     )
 
     # save job URL in current context to easily check after
-    ctx = load_current_context()
-    ctx.setdefault("jobs", []).append(
-        {
-            "project_id": project_id,
-            "version": version,
-            "created_at": datetime.datetime.now().isoformat(),
-            "job": status.dict(),
-        }
-    )
-    save_context(name=ctx["name"], context=ctx, overwrite=True)
+    register_job(project_id, version, status.dict())
     print(f":gear: Job created for project {project_id}@{version}:")
     print(status)

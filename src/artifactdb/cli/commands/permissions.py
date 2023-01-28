@@ -61,7 +61,28 @@ def fetch_permissions(project_id, version=None):
         print(f"[red]Unable to fetch permissions[/red]: {exc}")
 
 
-def apply_permissions(permissions, project_id, version=None):
+def apply_permissions(permissions, project_id, version, existings, confirm, verbose):
+    console = Console()
+    if existings:
+        if verbose:
+            print("[bright_blue]Existing[/bright_blue] permissions found:")
+            console.print(Syntax(yaml.dump(existings), "yaml"))
+            print("[green]New[/green] permissions to apply:")
+            console.print(Syntax(yaml.dump(permissions), "yaml"))
+        if existings == permissions:
+            print(":point_right: Existing and new permissions are the same, nothing to do")
+            raise Exit(0)
+        if confirm:
+            replace = Confirm.ask(
+                f"Replace existing permissions?",
+                default=False,
+            )
+            if not replace:
+                raise Abort()
+    else:
+        if verbose:
+            print("No existing permissions found")
+
     client = get_contextual_client()
     endpoint = build_endpoint(project_id, version)
     try:
@@ -176,7 +197,7 @@ def show(
 
 
 @app.command()
-def set(
+def replace(
     what: str = Argument(
         None,
         help="Identifier for which the permissions will be replaced or set. Notation can be a [project_id], "
@@ -214,30 +235,73 @@ def set(
     """
     Replace existing permissions or create new ones.
     """
-    console = Console()
     pid, ver = parse_project_version(what, project_id, version)
     existings = fetch_permissions(pid, ver)
     orig = copy.deepcopy(permissions)
     permissions = parse_permissions(permissions, existings, merge)
     check_permissions(pid, ver, permissions, orig, confirm)
-    if existings:
-        if verbose:
-            print("[bright_blue]Existing[/bright_blue] permissions found:")
-            console.print(Syntax(yaml.dump(existings), "yaml"))
-            print("[green]New[/green] permissions to apply:")
-            console.print(Syntax(yaml.dump(permissions), "yaml"))
-        if confirm:
-            replace = Confirm.ask(
-                f"Replace existing permissions?",
-                default=False,
-            )
-            if not replace:
-                raise Abort()
-    else:
-        if verbose:
-            print("No existing permissions found")
-
-    job = apply_permissions(permissions, pid, ver)
+    job = apply_permissions(permissions, pid, ver, existings, confirm, verbose)
     register_job(pid, ver, job)
     print(f":gear: Indexing job created, new permissions will be active once done:")
     print(job)
+
+
+@app.command()
+def add(
+    what: str = Argument(
+        None,
+        help="Identifier for which the permissions will modified. Notation can be a [project_id], "
+        + "[project_id@version] for a specific version. Alternately, --project-id and "
+        + "--version can be used.",
+    ),
+    project_id: str = Option(
+        None,
+        help="Project ID.",
+    ),
+    version: str = Option(
+        None,
+        help="Requires --project-id. Fetch permissions for a specific version of a project",
+    ),
+    owners:str = Option(
+        None,
+        help="Comma separated list of usernames, distribution lists, AD groups",
+    ),
+    viewers:str = Option(
+        None,
+        help="Comma separated list of usernames, distribution lists, AD groups",
+    ),
+    confirm:bool = Option(
+        True,
+        help="Ask for confirmation if existing permissions exist, before replacing them."
+    ),
+    verbose:bool = Option(
+        False,
+        help="Show additional information, eg. existing vs. new permissions, etc...",
+    ),
+):
+    """
+    Add owners or viewers to project/version permissions.
+    """
+    if owners is None and viewers is None:
+        print("'--owners' or '--viewers' must be specified")
+        raise Abort()
+    pid, ver = parse_project_version(what, project_id, version)
+    existings = fetch_permissions(pid, ver)
+    permissions = copy.deepcopy(existings)
+    # normalize
+    if owners is None:
+        owners = ""
+    if viewers is None:
+        viewers = ""
+    owners = [e for e in map(str.strip,owners.split(",")) if e]
+    viewers = [e for e in map(str.strip,viewers.split(",")) if e]
+    # merge owners/viewers, avoid duplicates
+    new_owners = list(set(existings.get("owners",[])).union(set(owners)))
+    new_viewers = list(set(existings.get("viewers",[])).union(set(viewers)))
+    permissions["owners"] = sorted(new_owners)
+    permissions["viewers"] = sorted(new_viewers)
+    job = apply_permissions(permissions, pid, ver, existings, confirm, verbose)
+    register_job(pid, ver, job)
+    print(f":gear: Indexing job created, new permissions will be active once done:")
+    print(job)
+

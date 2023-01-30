@@ -27,6 +27,7 @@ from ..cliutils import (
     parse_artifactdb_notation,
     register_job,
     InvalidArgument,
+    ROLE_ACCESS,
 )
 
 
@@ -37,6 +38,13 @@ app = Typer(help="Manage project's permissions")
 # UTILS #
 #########
 
+
+def list_access_role():
+    return {k.value for k in ROLE_ACCESS}
+
+
+def sanitize_users(users:str):
+    return [e for e in map(str.strip,users.split(",")) if e]
 
 def build_endpoint(project_id, version):
     if version is None:
@@ -98,9 +106,56 @@ def apply_permissions(permissions, project_id, version, existings, confirm, verb
         print(f"[red]Unable to fetch permissions[/red]: {exc}")
 
 
-def parse_permissions(permissions:str, existings:dict, merge:bool):
+def delete_permissions(project_id, version, existings, confirm, verbose):
+    assert project_id  # ensure we're at least at project-level permissions
+    console = Console()
+    if not existings:
+        print(":point_right: No existing permissions found, nothing to do")
+        raise Exit(0)
+    if verbose:
+        print("[bright_blue]Existing[/bright_blue] permissions found:")
+        console.print(Syntax(yaml.dump(existings), "yaml"))
+    if confirm:
+        delete = Confirm.ask(
+            f"Are you [bold]sure[/bold] you want to [red]delete[/red] these permissions?",
+            default=False,
+        )
+        if not delete:
+            raise Abort()
+    client = get_contextual_client()
+    endpoint = build_endpoint(project_id, version)
+    try:
+        res = get_response(
+            client._http,
+            "delete",
+            client._url + endpoint,
+            auth=client._auth,
+        )
+        return res.json()
+    except ADBClientError as exc:
+        print(f"[red]Unable to delete permissions[/red]: {exc}")
+
+
+def parse_permissions(permissions:str, existings:dict, parts:dict, merge:bool):
+    """
+    Parse permissions string as a JSON document and validate the content.
+    `parts` can be provided as a source of permission for individual rules,
+    `merge` allows to merge `permissions` on top of `existings` ones.
+
+    Ex:
+    - permissions = {"viewers": ["me"]}
+    - existings = {"scope": "project","read_access":"viewers","viewers":["you"]}
+    - parts = {"read_access": "public"}
+    - merge=true
+    resulting in:
+      {"scope": "project","read_access":"public","viewers":["me"]}
+    => permissions + parts = {"viewers": ["me"], {"read_access": "public"}}
+    => then merged on top of existings
+
+    """
     try:
         permissions = json.loads(permissions)
+        permissions.update(parts)
         if merge:
             print("[orange3]Merging[/orange3] with existing permissions")
             # additional merge (model's defaults was first pass), starting from
@@ -196,8 +251,8 @@ def show(
         )
 
 
-@app.command()
-def replace(
+@app.command("set")
+def set_permissions(
     what: str = Argument(
         None,
         help="Identifier for which the permissions will be replaced or set. Notation can be a [project_id], "
@@ -213,7 +268,7 @@ def replace(
         help="Requires --project-id. Fetch permissions for a specific version of a project",
     ),
     permissions:str = Option(
-        ...,
+        None,
         help="New permissions, JSON string format. Partial permissions information will be " + \
              "completed with default permissions values. See also --merge.",
     ),
@@ -223,6 +278,44 @@ def replace(
              "This allows to change parts of the permissions profile without having to re-declare " + \
              "it completely",
     ),
+    read_access:str = Option(
+        None,
+        help="Defines read access rule",
+        autocompletion=list_access_role,
+    ),
+    write_access:str = Option(
+        None,
+        help="Defines write access rule",
+        autocompletion=list_access_role,
+    ),
+    viewers:str = Option(
+        None,
+        help="Replace existing viewers with comma-separated list of new viewers. An empty string remove all viewers.",
+    ),
+    add_viewers:str = Option(
+        None,
+        help="Add one or more viewers (comma-separated) to existing ones",
+    ),
+    owners:str = Option(
+        None,
+        help="Replace existing owners with comma-separated list of new owners. An empty string remove all owners.",
+    ),
+    add_owners:str = Option(
+        None,
+        help="Add one or more owners (comma-separated) to existing ones",
+    ),
+    public:bool = Option(
+        False,
+        help="Make the project publicly accessible (shortcut to --read-access=public",
+    ),
+    private:bool = Option(
+        False,
+        help="Restrict the access to the project to viewers only (shortcut to --read-access=viewers",
+    ),
+    hide:bool = Option(
+        False,
+        help="Hide the dataset to anyone except admins (shortcut to --read-access=none --write-access=none",
+    ),
     confirm:bool = Option(
         True,
         help="Ask for confirmation if existing permissions exist, before replacing them."
@@ -233,24 +326,81 @@ def replace(
     ),
 ):
     """
-    Replace existing permissions or create new ones.
+    Replace existing permissions or create new ones. A full permissions document can be passed
+    with `--permissions`, or individual parts can be provided with the other options.
     """
     pid, ver = parse_project_version(what, project_id, version)
     existings = fetch_permissions(pid, ver)
+
+    # rebuild a permission profile with individual parts, if any passed
+    parts = {}
+    # combination sanity check
+    if not viewers is None and not add_viewers is None:
+        print("[red]Invalid combination of arguments[/red], '--viewers' cannot be used " + \
+              "with '--add-viewers'")
+        raise Exit(255)
+    if not owners is None and not add_owners is None:
+        print("[red]Invalid combination of arguments[/red], '--owners' cannot be used " + \
+              "with '--add-owners'")
+        raise Exit(255)
+    if not read_access is None and (public or private):
+        print("[red]Invalid combination of arguments[/red], '--public' cannot be used " + \
+              "with '--read-access'")
+        raise Exit(255)
+    if hide and (not read_access is None or not write_access is None):
+        print("[red]Invalid combination of arguments[/red], '--hide' cannot be used " + \
+              "with '--read-access' or '--write-access'")
+        raise Exit(255)
+
+    if not read_access is None:
+        parts["read_access"] = read_access
+    if not write_access is None:
+        parts["write_access"] = write_access
+    if not viewers is None:
+        parts["viewers"] = sanitize_users(viewers)
+    if not owners is None:
+        parts["owners"] = sanitize_users(owners)
+    if not add_viewers is None:
+        # merge to avoid duplicates
+        add_viewers = sanitize_users(add_viewers)
+        new_viewers = list(set(existings.get("viewers",[])).union(set(add_viewers)))
+        parts["viewers"] = sorted(new_viewers)
+    if not add_owners is None:
+        add_owners = sanitize_users(add_owners)
+        new_owners = list(set(existings.get("owners",[])).union(set(add_owners)))
+        parts["owners"] = sorted(new_owners)
+    if hide:
+        parts["read_access"] = "none"
+        parts["write_access"] = "none"
+    if public:
+        parts["read_access"] = "public"
+    if private:
+        parts["read_access"] = "viewers"
+
+    if permissions and parts:
+        print("[red]Invalid combination of arguments[/red], '--permissions' cannot be used " + \
+              "in addition to individual permissions parts: {}".format(list(parts.keys())))
+        raise Exit(255)
+
+    if permissions is None:
+        permissions = "{}"
+
     orig = copy.deepcopy(permissions)
-    permissions = parse_permissions(permissions, existings, merge)
+    permissions = parse_permissions(permissions, existings, parts, merge)
     check_permissions(pid, ver, permissions, orig, confirm)
     job = apply_permissions(permissions, pid, ver, existings, confirm, verbose)
-    register_job(pid, ver, job)
-    print(f":gear: Indexing job created, new permissions will be active once done:")
-    print(job)
+    if job:
+        register_job(pid, ver, job)
+        console = Console()
+        print(f":gear: Indexing job created, new permissions will be active once done:")
+        console.print(Syntax(yaml.dump(job), "yaml"))
 
 
 @app.command()
-def add(
+def delete(
     what: str = Argument(
         None,
-        help="Identifier for which the permissions will modified. Notation can be a [project_id], "
+        help="Identifier for which the permissions will deleted. Notation can be a [project_id], "
         + "[project_id@version] for a specific version. Alternately, --project-id and "
         + "--version can be used.",
     ),
@@ -260,48 +410,29 @@ def add(
     ),
     version: str = Option(
         None,
-        help="Requires --project-id. Fetch permissions for a specific version of a project",
-    ),
-    owners:str = Option(
-        None,
-        help="Comma separated list of usernames, distribution lists, AD groups",
-    ),
-    viewers:str = Option(
-        None,
-        help="Comma separated list of usernames, distribution lists, AD groups",
+        help="Requires --project-id. Delete permissions for a specific version of a project",
     ),
     confirm:bool = Option(
         True,
-        help="Ask for confirmation if existing permissions exist, before replacing them."
+        help="Ask for confirmation before repla."
     ),
     verbose:bool = Option(
         False,
-        help="Show additional information, eg. existing vs. new permissions, etc...",
+        help="Show permissions that will be deleted",
     ),
 ):
     """
-    Add owners or viewers to project/version permissions.
+    Delete permission profile for a given project/version. After deletion, the new permissions will
+    inherit from upper scope: version > project > global. If no permissions can be inherited,
+    the project/version becomes permanently unavailable (except admins), USE WITH CAUTION !
+    (you've been warned)
     """
-    if owners is None and viewers is None:
-        print("'--owners' or '--viewers' must be specified")
-        raise Abort()
     pid, ver = parse_project_version(what, project_id, version)
     existings = fetch_permissions(pid, ver)
-    permissions = copy.deepcopy(existings)
-    # normalize
-    if owners is None:
-        owners = ""
-    if viewers is None:
-        viewers = ""
-    owners = [e for e in map(str.strip,owners.split(",")) if e]
-    viewers = [e for e in map(str.strip,viewers.split(",")) if e]
-    # merge owners/viewers, avoid duplicates
-    new_owners = list(set(existings.get("owners",[])).union(set(owners)))
-    new_viewers = list(set(existings.get("viewers",[])).union(set(viewers)))
-    permissions["owners"] = sorted(new_owners)
-    permissions["viewers"] = sorted(new_viewers)
-    job = apply_permissions(permissions, pid, ver, existings, confirm, verbose)
-    register_job(pid, ver, job)
-    print(f":gear: Indexing job created, new permissions will be active once done:")
-    print(job)
+    job = delete_permissions(pid, ver, existings, confirm, verbose)
+    if job:
+        register_job(pid, ver, job)
+        console = Console()
+        print(f":gear: Indexing job created, new inherited permissions will be active once done:")
+        console.print(Syntax(yaml.dump(job), "yaml"))
 

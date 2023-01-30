@@ -23,6 +23,7 @@ from ..cliutils import (
     register_job,
     PermissionsInfo,
     InvalidArgument,
+    ROLE_ACCESS,
 )
 
 
@@ -32,10 +33,6 @@ COMMAND_FUNC = "upload_command"
 
 app = Typer(help="Upload files to an ArtifactDB instance")
 
-ROLE_ACCESS = enum.Enum(
-    "read_access",
-    {k: k for k in ("owners", "viewers", "authenticated", "public", "none")},
-)
 UPLOAD_MODES = enum.Enum(
     "upload_modes",
     {

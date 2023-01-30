@@ -1,6 +1,7 @@
 import datetime
 import pathlib
 import importlib
+import enum
 
 import typer
 import yaml
@@ -30,6 +31,12 @@ class PluginError(Exception):
 
 class SearchProfileError(Exception):
     pass
+
+
+ROLE_ACCESS = enum.Enum(
+    "read_access",
+    {k: k for k in ("owners", "viewers", "authenticated", "public", "none")},
+)
 
 
 def get_client(url, *args, **kwargs):

@@ -183,6 +183,9 @@ def process_check_job(job, client, format, prune, verbose, updated_jobs):
 def check_all_jobs(jobs, client, format, prune, verbose):
     updated_jobs = []
     for job in jobs:
+        if not job or not job["job"]:
+            print(f"[orange3]Found invalid job definition, discarded[/orange3]: {job}")
+            continue  # not part of what we later save
         process_check_job(
             job, client, format, prune, verbose, updated_jobs=updated_jobs
         )

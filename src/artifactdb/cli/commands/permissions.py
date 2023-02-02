@@ -43,8 +43,9 @@ def list_access_role():
     return {k.value for k in ROLE_ACCESS}
 
 
-def sanitize_users(users:str):
-    return [e for e in map(str.strip,users.split(",")) if e]
+def sanitize_users(users: str):
+    return [e for e in map(str.strip, users.split(",")) if e]
+
 
 def build_endpoint(project_id, version):
     if version is None:
@@ -78,7 +79,9 @@ def apply_permissions(permissions, project_id, version, existings, confirm, verb
             print("[green]New[/green] permissions to apply:")
             console.print(Syntax(yaml.dump(permissions), "yaml"))
         if existings == permissions:
-            print(":point_right: Existing and new permissions are the same, nothing to do")
+            print(
+                ":point_right: Existing and new permissions are the same, nothing to do"
+            )
             raise Exit(0)
         if confirm:
             replace = Confirm.ask(
@@ -136,7 +139,7 @@ def delete_permissions(project_id, version, existings, confirm, verbose):
         print(f"[red]Unable to delete permissions[/red]: {exc}")
 
 
-def parse_permissions(permissions:str, existings:dict, parts:dict, merge:bool):
+def parse_permissions(permissions: str, existings: dict, parts: dict, merge: bool):
     """
     Parse permissions string as a JSON document and validate the content.
     `parts` can be provided as a source of permission for individual rules,
@@ -164,7 +167,9 @@ def parse_permissions(permissions:str, existings:dict, parts:dict, merge:bool):
             to_merge.update(permissions)
             permissions = to_merge
     except json.JSONDecodeError as exc:
-        print(f"[red]Expected JSON string for --permissions argument, parsing error[/red]: {exc}")
+        print(
+            f"[red]Expected JSON string for --permissions argument, parsing error[/red]: {exc}"
+        )
         raise Exit(255)
     try:
         # at this point, any missing values from the passed permissions are
@@ -175,20 +180,28 @@ def parse_permissions(permissions:str, existings:dict, parts:dict, merge:bool):
         raise Exit(255)
 
 
-def check_permissions(project_id, version, permissions:dict, passed:dict, confirm:bool):
-    passed = json.loads(passed)  # we known it'll succeed, parse_permissions() was used before
+def check_permissions(
+    project_id, version, permissions: dict, passed: dict, confirm: bool
+):
+    passed = json.loads(
+        passed
+    )  # we known it'll succeed, parse_permissions() was used before
     if not "scope" in passed:
         if not version is None:
             permissions["scope"] = "version"
         else:
             permissions["scope"] = "project"
     if not version is None and permissions["scope"] != "version":
-        print("[red]Invalid scope[/red], if a version is specified, the scope must " +  \
-              "be set to [bright_black]version[/bright_black]")
+        print(
+            "[red]Invalid scope[/red], if a version is specified, the scope must "
+            + "be set to [bright_black]version[/bright_black]"
+        )
         raise Exit(255)
     if permissions["read_access"] == "none" and permissions["write_access"] == "none":
-        print("After applying permissions, the project  (or version) will be [orange3]hidden[/orange3] and " + \
-              "[orange3]unaccessible[/orange3] for users (except admins)")
+        print(
+            "After applying permissions, the project  (or version) will be [orange3]hidden[/orange3] and "
+            + "[orange3]unaccessible[/orange3] for users (except admins)"
+        )
         if confirm:
             hide = Confirm.ask(
                 f"Are you sure you want to hide this project/version?",
@@ -210,6 +223,7 @@ def parse_project_version(what, project_id, version):
             "[red]Missing argument[/red]: provide a project ID, and an optional version"
         )
         raise Abort()
+
 
 ############
 # COMMANDS #
@@ -267,60 +281,60 @@ def set_permissions(
         None,
         help="Requires --project-id. Fetch permissions for a specific version of a project",
     ),
-    permissions:str = Option(
+    permissions: str = Option(
         None,
-        help="New permissions, JSON string format. Partial permissions information will be " + \
-             "completed with default permissions values. See also --merge.",
+        help="New permissions, JSON string format. Partial permissions information will be "
+        + "completed with default permissions values. See also --merge.",
     ),
-    merge:bool = Option(
+    merge: bool = Option(
         True,
-        help="Using existing permissions as base, and merge new declared permissions on top of it. " + \
-             "This allows to change parts of the permissions profile without having to re-declare " + \
-             "it completely",
+        help="Using existing permissions as base, and merge new declared permissions on top of it. "
+        + "This allows to change parts of the permissions profile without having to re-declare "
+        + "it completely",
     ),
-    read_access:str = Option(
+    read_access: str = Option(
         None,
         help="Defines read access rule",
         autocompletion=list_access_role,
     ),
-    write_access:str = Option(
+    write_access: str = Option(
         None,
         help="Defines write access rule",
         autocompletion=list_access_role,
     ),
-    viewers:str = Option(
+    viewers: str = Option(
         None,
         help="Replace existing viewers with comma-separated list of new viewers. An empty string remove all viewers.",
     ),
-    add_viewers:str = Option(
+    add_viewers: str = Option(
         None,
         help="Add one or more viewers (comma-separated) to existing ones",
     ),
-    owners:str = Option(
+    owners: str = Option(
         None,
         help="Replace existing owners with comma-separated list of new owners. An empty string remove all owners.",
     ),
-    add_owners:str = Option(
+    add_owners: str = Option(
         None,
         help="Add one or more owners (comma-separated) to existing ones",
     ),
-    public:bool = Option(
+    public: bool = Option(
         False,
         help="Make the project publicly accessible (shortcut to --read-access=public",
     ),
-    private:bool = Option(
+    private: bool = Option(
         False,
         help="Restrict the access to the project to viewers only (shortcut to --read-access=viewers",
     ),
-    hide:bool = Option(
+    hide: bool = Option(
         False,
         help="Hide the dataset to anyone except admins (shortcut to --read-access=none --write-access=none",
     ),
-    confirm:bool = Option(
+    confirm: bool = Option(
         True,
-        help="Ask for confirmation if existing permissions exist, before replacing them."
+        help="Ask for confirmation if existing permissions exist, before replacing them.",
     ),
-    verbose:bool = Option(
+    verbose: bool = Option(
         False,
         help="Show additional information, eg. existing vs. new permissions, etc...",
     ),
@@ -336,20 +350,28 @@ def set_permissions(
     parts = {}
     # combination sanity check
     if not viewers is None and not add_viewers is None:
-        print("[red]Invalid combination of arguments[/red], '--viewers' cannot be used " + \
-              "with '--add-viewers'")
+        print(
+            "[red]Invalid combination of arguments[/red], '--viewers' cannot be used "
+            + "with '--add-viewers'"
+        )
         raise Exit(255)
     if not owners is None and not add_owners is None:
-        print("[red]Invalid combination of arguments[/red], '--owners' cannot be used " + \
-              "with '--add-owners'")
+        print(
+            "[red]Invalid combination of arguments[/red], '--owners' cannot be used "
+            + "with '--add-owners'"
+        )
         raise Exit(255)
     if not read_access is None and (public or private):
-        print("[red]Invalid combination of arguments[/red], '--public' cannot be used " + \
-              "with '--read-access'")
+        print(
+            "[red]Invalid combination of arguments[/red], '--public' cannot be used "
+            + "with '--read-access'"
+        )
         raise Exit(255)
     if hide and (not read_access is None or not write_access is None):
-        print("[red]Invalid combination of arguments[/red], '--hide' cannot be used " + \
-              "with '--read-access' or '--write-access'")
+        print(
+            "[red]Invalid combination of arguments[/red], '--hide' cannot be used "
+            + "with '--read-access' or '--write-access'"
+        )
         raise Exit(255)
 
     if not read_access is None:
@@ -363,11 +385,11 @@ def set_permissions(
     if not add_viewers is None:
         # merge to avoid duplicates
         add_viewers = sanitize_users(add_viewers)
-        new_viewers = list(set(existings.get("viewers",[])).union(set(add_viewers)))
+        new_viewers = list(set(existings.get("viewers", [])).union(set(add_viewers)))
         parts["viewers"] = sorted(new_viewers)
     if not add_owners is None:
         add_owners = sanitize_users(add_owners)
-        new_owners = list(set(existings.get("owners",[])).union(set(add_owners)))
+        new_owners = list(set(existings.get("owners", [])).union(set(add_owners)))
         parts["owners"] = sorted(new_owners)
     if hide:
         parts["read_access"] = "none"
@@ -378,8 +400,12 @@ def set_permissions(
         parts["read_access"] = "viewers"
 
     if permissions and parts:
-        print("[red]Invalid combination of arguments[/red], '--permissions' cannot be used " + \
-              "in addition to individual permissions parts: {}".format(list(parts.keys())))
+        print(
+            "[red]Invalid combination of arguments[/red], '--permissions' cannot be used "
+            + "in addition to individual permissions parts: {}".format(
+                list(parts.keys())
+            )
+        )
         raise Exit(255)
 
     if permissions is None:
@@ -412,11 +438,8 @@ def delete(
         None,
         help="Requires --project-id. Delete permissions for a specific version of a project",
     ),
-    confirm:bool = Option(
-        True,
-        help="Ask for confirmation before repla."
-    ),
-    verbose:bool = Option(
+    confirm: bool = Option(True, help="Ask for confirmation before repla."),
+    verbose: bool = Option(
         False,
         help="Show permissions that will be deleted",
     ),
@@ -433,6 +456,7 @@ def delete(
     if job:
         register_job(pid, ver, job)
         console = Console()
-        print(f":gear: Indexing job created, new inherited permissions will be active once done:")
+        print(
+            f":gear: Indexing job created, new inherited permissions will be active once done:"
+        )
         console.print(Syntax(yaml.dump(job), "yaml"))
-

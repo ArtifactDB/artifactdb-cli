@@ -263,11 +263,14 @@ def register_job(project_id, version, status):
     )
     save_context(name=ctx["name"], context=ctx, overwrite=True)
 
+
 def load_plugins(app):
     plugins_cfgs = load_plugins_config()
     for plugin_cfg in plugins_cfgs["plugins"]:
         if not "name" in plugin_cfg:
             print(f"[red]Plugin missing name, skip.[/red] {plugin_cfg!r}")
+            continue
+        if plugin_cfg.get("enabled") is False:
             continue
         name = plugin_cfg["name"]
         cmds_mod_path = plugin_cfg["module"] + ".commands"  # by plugins dev convention
@@ -308,7 +311,7 @@ def load_commands(app, commands_module):
                 cmd_mod = importlib.import_module(cmd_mod_path)
                 load_command(app, cmd_mod)
             except (ModuleNotFoundError, ImportError) as exc:
-                print(f"[red]Unable to load plugin {name!r}: {exc}")
+                print(f"[red]Unable to load command from {cmd_mod_path}: {exc}")
 
 
 def parse_artifactdb_notation(what, project_id, version, id):

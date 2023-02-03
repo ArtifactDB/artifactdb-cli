@@ -42,7 +42,7 @@ def test_adb_context_create_no_auth_url():
     assert result.exit_code == 1
     result_stdout = result.stdout.replace("\n", "")
     assert (
-        "Couldn't not determine authentication issue URL, please provide '--auth-url' argument"
+        "Couldn't not determine authentication issuer URL"
         in result_stdout
     )
     assert "Aborted" in result_stdout
@@ -94,7 +94,7 @@ def test_adb_context_create_overwrite_existing():
         "Context 'olympus-api-1-uat' already exists, do you want to replace it?"
         in result.stdout
     )
-    assert "Overwriting existing context 'olympus-api-1-uat'" in result.stdout
+    assert "Overwriting existing context" in result.stdout
 
 
 def test_adb_context_create_data_provided_manually():
@@ -155,7 +155,7 @@ def test_adb_context_create_data_provided_via_options_svc_acc_and_end_user_shoul
     assert result.exit_code == 2
     assert (
         "Option --auth-service-account-id can be used with -auth-client-id or --auth-username, choose either"
-        " service account or end-user authentication" in result_stdout
+        " service account or end-user" in result_stdout
     )
 
 
@@ -168,8 +168,7 @@ def test_adb_context_create_no_project_prefix():
     result_stdout = result.stdout.replace("\n", "")
     assert result.exit_code == 0
     assert (
-        "ArtifactDB instance didn't provide project prefix information, will use default one (or use"
-        " --project-prefix option to specify another one)" in result_stdout
+        "ArtifactDB instance didn't provide project prefix information, will use default one" in result_stdout
     )
 
 

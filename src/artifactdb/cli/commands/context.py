@@ -125,8 +125,8 @@ def create(
     # for now, we support end-user and svc account auth, exclusive
     if (auth_client_id or auth_username) and auth_service_account_id:
         print(
-            "[red] Option --auth-service-account-id can be used with -auth-client-id or --auth-username, "
-            + "choose either service account or end-user authentication"
+            "[red] Option --auth-service-account-id can't be used with -auth-client-id or --auth-username, "
+            + "choose either service account or end-user authentication[/red]"
         )
         raise Exit(code=2)
     # collect/determine context info
@@ -145,7 +145,7 @@ def create(
             print(f"Found auth issuer URL {auth_url}")
         except (AttributeError, KeyError) as e:
             print(
-                "Couldn't not determine authentication issue URL, please provide '--auth-url' argument"
+                "Couldn't not determine authentication issuer URL, please provide '--auth-url' argument"
             )
             raise Abort()
     if not auth_service_account_id:

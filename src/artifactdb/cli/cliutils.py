@@ -11,6 +11,24 @@ from typer import Exit
 import harpocrates
 from artifactdb.identifiers.aid import unpack_id, MalformedID
 from artifactdb.client.excavator import Excavator, PermissionsInfo
+from artifactdb.client import __version__ as __client_version__
+
+
+import sys
+
+if sys.version_info >= (3, 8):
+    from importlib.metadata import version, PackageNotFoundError
+else:
+    from importlib_metadata import version, PackageNotFoundError
+
+try:
+    # Change here if project is renamed and does not equal the package name
+    dist_name = "artifactdb-cli"
+    __version__ = version(dist_name)
+except PackageNotFoundError as e:
+    __version__ = "unknown"
+finally:
+    del version, PackageNotFoundError
 
 
 class MissingArgument(Exception):
@@ -39,11 +57,21 @@ ROLE_ACCESS = enum.Enum(
 )
 
 
+def get_cli_version():
+    return __version__
+
+
+def get_client_version():
+    return __client_version__
+
+
 def get_client(url, *args, **kwargs):
     return Excavator(url, *args, **kwargs)
 
 
 def build_auth(auth_info):
+    if auth_info.get("anonymous",False):
+        return None
     url = auth_info["url"]
     if "/realms" in url:
         parts = url.rsplit("/", 2)
@@ -358,3 +386,4 @@ def parse_artifactdb_notation(what, project_id, version, id):
         raise InvalidArgument(f"Invalid project ID {project_id!r} (`:` not allowed)")
 
     return project_id, version, path
+

@@ -10,7 +10,7 @@ from typer import Exit
 
 import harpocrates
 from artifactdb.identifiers.aid import unpack_id, MalformedID
-from artifactdb.client.excavator import Excavator, PermissionsInfo
+from artifactdb.client.excavator.excavator import Excavator, PermissionsInfo
 from artifactdb.client import __version__ as __client_version__
 
 

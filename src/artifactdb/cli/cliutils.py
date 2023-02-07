@@ -70,7 +70,7 @@ def get_client(url, *args, **kwargs):
 
 
 def build_auth(auth_info):
-    if auth_info.get("anonymous",False):
+    if auth_info.get("anonymous", False):
         return None
     url = auth_info["url"]
     if "/realms" in url:
@@ -386,4 +386,3 @@ def parse_artifactdb_notation(what, project_id, version, id):
         raise InvalidArgument(f"Invalid project ID {project_id!r} (`:` not allowed)")
 
     return project_id, version, path
-

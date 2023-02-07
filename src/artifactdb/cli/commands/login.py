@@ -31,9 +31,9 @@ def login_command():
     Switch to authenticated access. Only effective within an ArtifactDB shell.
     """
     ctx = load_current_context()
-    ctx["auth"].pop("anonymous",None)
+    ctx["auth"].pop("anonymous", None)
     save_context(ctx["name"], ctx, overwrite=True, quiet=True)
     _ = get_contextual_client()
-    print(f":closed_lock_with_key: Authenticated access enabled for context {ctx['name']!r}")
-    
-
+    print(
+        f":closed_lock_with_key: Authenticated access enabled for context {ctx['name']!r}"
+    )

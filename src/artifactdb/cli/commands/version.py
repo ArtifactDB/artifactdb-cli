@@ -32,5 +32,3 @@ def version_command():
     client_version = get_client_version()
     print(f"ArtifactDB-CLI version {cli_version!r}")
     print(f"ArtifactDB-client version {client_version!r}")
-    
-

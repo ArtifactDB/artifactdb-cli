@@ -33,5 +33,3 @@ def logout_command():
     ctx["auth"]["anonymous"] = True
     save_context(ctx["name"], ctx, overwrite=True, quiet=True)
     print(":alien: Anonymous access enabled")
-    
-

@@ -379,11 +379,14 @@ def set_permissions(
     if not add_viewers is None:
         # merge to avoid duplicates
         add_viewers = sanitize_users(add_viewers)
-        new_viewers = list(set(existings.get("viewers", [])).union(set(add_viewers)))
+        print("existings.get %s" % existings)
+        existing_viewers = existings.get("viewers") or []
+        new_viewers = list(set(existing_viewers).union(set(add_viewers)))
         parts["viewers"] = sorted(new_viewers)
     if not add_owners is None:
         add_owners = sanitize_users(add_owners)
-        new_owners = list(set(existings.get("owners", [])).union(set(add_owners)))
+        existing_owners = existings.get("owners") or []
+        new_owners = list(set(existing_owners).union(set(add_owners)))
         parts["owners"] = sorted(new_owners)
     if hide:
         parts["read_access"] = "none"

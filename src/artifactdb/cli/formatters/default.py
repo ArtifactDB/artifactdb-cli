@@ -8,7 +8,6 @@ from . import BaseFormatter
 
 
 class YamlFormatter(BaseFormatter):
-
     NAME = "yaml"
 
     def format_result(self, result: dict, console: Console):
@@ -18,7 +17,6 @@ class YamlFormatter(BaseFormatter):
 
 
 class JsonFormatter(BaseFormatter):
-
     NAME = "json"
 
     def format_result(self, result: dict, console: Console):

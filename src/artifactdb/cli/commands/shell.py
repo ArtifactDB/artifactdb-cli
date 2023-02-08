@@ -39,7 +39,7 @@ def shell_command(ctx: Context):
     cli_version = get_cli_version()
     print(
         ":classical_building:  Welcome to the [bright_black]ArtifactDB shell[/bright_black] "
-        + f"version [orange3]{cli_version}[/orange3],type `help` for available commands"
+        + f"version [orange3]{cli_version}[/orange3], type `help` for available commands"
     )
     try:
         adbctx = load_current_context()

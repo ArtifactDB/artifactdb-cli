@@ -1,4 +1,14 @@
-#TODO: auth.url: auth from github.com? and url: from demodb?
+import re
+
+
+def clear_typer_output(output):
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    # delete ansi chars
+    result = ansi_escape.sub('', output)
+    # delete new line chars
+    result_final = result.replace('\n', ' ')
+    return result_final
+
 
 CONTEXT_DATA = """contexts:
 - auth:

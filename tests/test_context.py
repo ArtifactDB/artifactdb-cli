@@ -154,7 +154,7 @@ def test_adb_context_create_data_provided_via_options_svc_acc_and_end_user_shoul
     result_stdout = result.stdout.replace("\n", "")
     assert result.exit_code == 2
     assert (
-        "Option --auth-service-account-id can be used with -auth-client-id or --auth-username, choose either"
+        "Option --auth-service-account-id can't be used with -auth-client-id or --auth-username, choose either"
         " service account or end-user" in result_stdout
     )
 

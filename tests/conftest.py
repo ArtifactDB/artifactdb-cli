@@ -31,6 +31,14 @@ def create_base_context_manually():
 
 
 @pytest.fixture()
+def clear_config_file():
+    if os.path.exists(cfg_path):
+        os.remove(cfg_path)
+
+    with open(cfg_path, "w") as cfg_file:
+        cfg_file.write(CONTEXT_DATA)
+
+@pytest.fixture()
 def set_current_context_in_cfg():
     if os.path.exists(cfg_path):
         with open(cfg_path, "r") as cfg_file:

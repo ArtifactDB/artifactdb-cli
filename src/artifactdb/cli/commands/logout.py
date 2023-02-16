@@ -29,9 +29,9 @@ app = Typer()
 def logout_command(
     purge: bool = Option(
         False,
-        help="Logout and delete cached credentials. Subsequent login will trigger authentication again."
+        help="Logout and delete cached credentials. Subsequent login will trigger authentication again.",
     ),
-        ):
+):
     """
     Switch to anonymous access. Only effective within ArtifactDB shell.
     """

@@ -11,7 +11,6 @@ runner = CliRunner()
 
 def test_adb_download_no_args():
     result = runner.invoke(app, "download")
-    print(result.stdout)
     assert result.exit_code == 1
     assert "MissingArgument()" in str(result)
 
@@ -19,8 +18,6 @@ def test_adb_download_no_args():
 def test_adb_download_option_help():
     result = runner.invoke(app, ["download", "--help"])
     assert result.exit_code == 0
-    print(result.output)
-    print(result.stdout)
     arguments = ["WHAT", "DEST"]
     for argument in arguments:
         assert argument in result.stdout

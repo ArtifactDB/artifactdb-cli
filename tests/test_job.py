@@ -54,7 +54,6 @@ def test_adb_job_list(upload_new_project):
     # first we run fixture to upload new project in order to create a job
     project_id = upload_new_project["project_id"]
     result = runner.invoke(app, ["job", "list"])
-    print(result.stdout)
     assert result.exit_code == 0
     assert "job_id" in result.stdout
     assert "status" in result.stdout
@@ -67,7 +66,6 @@ def test_adb_job_list_verbose(upload_new_project):
     # first we run fixture to upload new project in order to create a job
     project_id = upload_new_project["project_id"]
     result = runner.invoke(app, ["job", "list", "--verbose"])
-    print(result.stdout)
     assert result.exit_code == 0
     assert "job_id" in result.stdout
     assert "job_url" in result.stdout
@@ -85,7 +83,7 @@ def test_adb_job_check_no_jobs(clear_config_file):
     assert "No jobs recorded in current context, nothing to check" in result.stdout
 
 
-def test_adb_job_list_check(upload_new_project):
+def test_adb_job_check(upload_new_project):
     # first we run fixture to upload new project in order to create a job
     project_id = upload_new_project["project_id"]
     result = runner.invoke(app, ["job", "check"])

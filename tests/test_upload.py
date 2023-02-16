@@ -112,7 +112,6 @@ def test_adb_upload_with_write_access(role):
 # consult with Sebastien
 # def test_adb_upload_with_upload_mode():
 #     result = runner.invoke(app, ["upload", "--upload-mode", "sts-credentials:boto3", path])
-#     print(result.stdout)
 #     assert result.exit_code == 0
 #     assert "Upload completed." in result.stdout
 

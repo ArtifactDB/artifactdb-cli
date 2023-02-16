@@ -65,9 +65,11 @@ def test_adb_upload_with_non_existing_project_id():
     assert result.exit_code == 1
 
 
-def test_adb_upload_with_existing_project_id_and_version():
+def test_adb_upload_with_existing_project_id_and_version(upload_new_project):
+    project_id = upload_new_project["project_id"]
+    project_version = upload_new_project["project_version"]
     result = runner.invoke(
-        app, ["upload", "--project-id", "test-OLA000000002", "--version", "2", path]
+        app, ["upload", "--project-id", project_id, "--version", project_version, path]
     )
     assert result.exit_code == 0
     assert "Upload completed." in result.stdout
@@ -154,16 +156,18 @@ def test_adb_upload_verbose_with_project_id():
     assert "Using presigned upload mode" in result.stdout
 
 
-def test_adb_upload_verbose_with_project_id_with_version_and_expiration_time():
+def test_adb_upload_verbose_with_project_id_with_version_and_expiration_time(upload_new_project):
+    project_id = upload_new_project["project_id"]
+    project_version = upload_new_project["project_version"]
     result = runner.invoke(
         app,
         [
             "upload",
             "--verbose",
             "--project-id",
-            "test-OLA000000002",
+            project_id,
             "--version",
-            "2",
+            project_version,
             "--expires-in",
             "in 1 minute",
             path,
@@ -172,7 +176,7 @@ def test_adb_upload_verbose_with_project_id_with_version_and_expiration_time():
     assert result.exit_code == 0
     assert "Summary" in result.stdout
     assert "Uploading 3 files from folder" in result.stdout
-    assert "To project test-OLA000000002 and version 2" in result.stdout
+    assert f"To project {project_id} and version {project_version}" in result.stdout
     assert "Using presigned upload mode" in result.stdout
     assert "Expiring 'in 1 minute'" in result.stdout
 

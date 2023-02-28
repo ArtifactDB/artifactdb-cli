@@ -144,7 +144,7 @@ def upload_new_project():
     project_version = project_id_and_version[-1:]
     # get job id
     start = "job_id='"
-    end = "', job_url"
+    end = "',\n    job_url"
     s = result.stdout
     job_id = s[s.find(start)+len(start):s.rfind(end)]
     uploaded_data = {"project_id": project_id, "project_version": project_version, "job_id": job_id}

@@ -26,19 +26,19 @@ from ..cliutils import (
 
 
 COMMAND_NAME = "tasks"
-app = Typer(help="Manage backend tasks (core & plugins). Note: most commands required admin permissions.")
+app = Typer(
+    help="Manage backend tasks (core & plugins). Note: most commands required admin permissions."
+)
 
 TASK_TYPES = enum.Enum(
     "task_types",
-    {
-        "core": "core",
-        "plugin": "plugin"
-    },
+    {"core": "core", "plugin": "plugin"},
 )
 
 #########
 # UTILS #
 #########
+
 
 def list_task_types():
     return {k.value for k in TASK_TYPES}
@@ -46,24 +46,24 @@ def list_task_types():
 
 def get_tasks(name=None):
     client = get_contextual_client()
-    res = client.request("get",client._url + "/tasks")
+    res = client.request("get", client._url + "/tasks")
     tasks = res.json()["tasks"]
     if name is None:
         return tasks
     for task in tasks:
         if task["name"] == name.strip():
             return task
-        
+
 
 def get_logs():
     client = get_contextual_client()
-    res = client.request("get",client._url + "/tasks/logs")
+    res = client.request("get", client._url + "/tasks/logs")
     return res.json()
 
 
 def clear_logs_cache():
     client = get_contextual_client()
-    res = client.request("put",client._url + "/task/logs/reset")
+    res = client.request("put", client._url + "/task/logs/reset")
     return res.json()
 
 
@@ -75,10 +75,10 @@ def run_task(name, kwargs):
         json={
             "name": name,
             "params": kwargs,
-        }
+        },
     )
     return res.json()
-    
+
 
 ############
 # COMMANDS #
@@ -96,16 +96,17 @@ def list(
     """
     List registered backend tasks
     """
+
     def keep(task):
         if type is None:
             return True
         elif type == TASK_TYPES.core and task.get("core") is True:
             return True
-        elif type == TASK_TYPES.plugin and  not task.get("core") is True:
+        elif type == TASK_TYPES.plugin and not task.get("core") is True:
             return True
         else:
             return False
-        
+
     tasks = get_tasks()
     console = Console()
     to_display = sorted([task["name"] for task in tasks if keep(task)])
@@ -114,10 +115,7 @@ def list(
 
 @app.command()
 def show(
-    name: str = Argument(
-        None,
-        help="Name of the task"
-    ),
+    name: str = Argument(None, help="Name of the task"),
 ):
     """Show task information (arguments, etc...)"""
     task = get_tasks(name)
@@ -130,14 +128,8 @@ def show(
 
 @app.command()
 def logs(
-    name:str = Argument(
-        None,
-        help="Show logs for a given task"
-    ),
-    clear:bool = Option(
-        False,
-        help="Clear cache storing recent task execution logs."
-    )
+    name: str = Argument(None, help="Show logs for a given task"),
+    clear: bool = Option(False, help="Clear cache storing recent task execution logs."),
 ):
     """
     Show logs for all recent tasks execution.
@@ -162,24 +154,21 @@ def logs(
 
 @app.command()
 def run(
-    name:str = Argument(
+    name: str = Argument(
         ...,
         help="Name of the task to trigger.",
     ),
-    params:str = Option(
+    params: str = Option(
         None,
-        help="JSON string representing the named params to pass for the execution. " + \
-             """Ex: '{"param1": "value1", "param2": false, "param3": [1,2,3]}'"""
+        help="JSON string representing the named params to pass for the execution. "
+        + """Ex: '{"param1": "value1", "param2": false, "param3": [1,2,3]}'""",
     ),
 ):
     """Trigger the execution of a given task, with its parameters (if any)."""
     kwargs = {}
     if params:
         kwargs = json.loads(params)
-    job = run_task(name,kwargs)
+    job = run_task(name, kwargs)
     register_job(None, None, job)  # no project_id/version
     console = Console()
     console.print(Syntax(yaml.dump(job), "yaml"))
-
-
-

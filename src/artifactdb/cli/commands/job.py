@@ -168,7 +168,7 @@ def process_check_job(job, client, format, prune, verbose, updated_jobs):
         display_job_status(status, format=format, verbose=verbose)
     except PurgedJobError:
         print(
-            f"Job [red]{job['job']['job_id']}[/red] was purged and is not available anymore"
+            f"Job [red]{job['job']['job_id']}[/red] was purged and is not available anymore (or is not running yet)"
         )
         # overwrite/normalize status value to decide further down if purgable or not
         status["status"] = "purged"

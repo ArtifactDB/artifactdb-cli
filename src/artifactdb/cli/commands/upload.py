@@ -162,7 +162,7 @@ def upload_command(
         expire_msg = f":hourglass_flowing_sand: Expiring {expires_in!r} ('{parsed}')"
 
     if verbose:
-        num_files = len(list(staging_path.rglob("*")))
+        num_files = len([_ for _ in staging_path.rglob("*") if _.is_file()])
         print("[bold underline]Summary[/bold underline]")
         print(
             f":sparkles: Uploading [blue]{num_files}[/blue] files from folder {staging_path}"

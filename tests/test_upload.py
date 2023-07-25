@@ -2,6 +2,7 @@ from typer.testing import CliRunner
 from artifactdb.cli.main import app
 import pytest
 import os
+import dateparser
 
 runner = CliRunner()
 
@@ -124,10 +125,30 @@ def test_adb_upload_with_expiration_date():
     assert "Upload completed." in result.stdout
 
 
+def test_adb_upload_with_expiration_date_verbose():
+    time = "in 1 minute"
+    result = runner.invoke(app, ["upload", "--expires-in", time, "--verbose", path])
+    assert result.exit_code == 0
+    assert "Upload completed." in result.stdout
+    assert f"Expiring in 1 minute ('{dateparser.parse(time)}')"
+
+
 def test_adb_upload_with_expiration_date_no_parsable():
     result = runner.invoke(app, ["upload", "--expires-in", "somerandomstring", path])
     assert result.exit_code == 1
-    assert """InvalidArgument("Couldn't parse date somerandomstring")""" in str(result)
+    assert str(result.exception) == "Couldn't parse date somerandomstring"
+
+
+def test_adb_upload_with_completed_by():
+    result = runner.invoke(app, ["upload", "--completed-by", "in 1 minute", path])
+    assert result.exit_code == 0
+    assert "Upload completed." in result.stdout
+
+
+def test_adb_upload_with_completed_by_no_parsable():
+    result = runner.invoke(app, ["upload", "--completed-by", "somerandomstring", path])
+    assert result.exit_code == 1
+    assert str(result.exception) == "Couldn't parse date somerandomstring"
 
 
 def test_adb_upload_no_validate():

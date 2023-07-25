@@ -110,6 +110,11 @@ def upload_command(
         help="Upload transient artifacts, expiring (purged) after given experation date. "
         + "Ex: '2022-12-25T00:00:00', 'December 25th', 'in 3 days', etc...",
     ),
+    completed_by: str = Option(
+        None,
+        help="Set uploading job to expire after completed by date/time."
+        + "Ex: '2022-12-25T00:00:00', 'December 25th', 'in 3 days', etc...",
+    ),
     validate: bool = Option(
         True,
         help="Validate metadata JSON files, using the $schema field and API validation endpoint",
@@ -146,13 +151,18 @@ def upload_command(
         write_access=write_access.value,
     )
     staging_path = pathlib.Path(staging_dir).expanduser()
-    completed_by = None  # only adjusted when low expires_in value
     mode = upload_mode.value
     sts_impl = None
     upload_msg = None
     expire_msg = None
 
     upload_msg = f":rocket: Using [bright_black]{mode}[/bright_black] upload mode"
+
+    if completed_by:
+        parsed = dateparser.parse(completed_by)
+        if not parsed:
+            raise InvalidArgument(f"Couldn't parse date {completed_by}")
+
     if expires_in:
         parsed = dateparser.parse(expires_in)
         if not parsed:

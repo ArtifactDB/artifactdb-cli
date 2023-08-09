@@ -4,8 +4,10 @@ import pathlib
 import typer
 import yaml
 from rich import print, print_json
+from typer import Exit
 
 import harpocrates
+from artifactdb.identifiers.aid import unpack_id, MalformedID
 from artifactdb.client.excavator import Excavator, PermissionsInfo
 
 
@@ -148,3 +150,47 @@ def load_config():
 def save_config(cfg):
     cfg_path = get_config_path()
     yaml.dump(cfg,open(cfg_path,"w"))
+
+
+def parse_artifactdb_notation(what, project_id, version, id):
+    if what and (project_id or version or id):
+        print("Option '--project-id', '--version' or '--id' cannot be used in addition to the [what] parameter")
+        raise Exit(4)
+    if (project_id or version) and id:
+        print("Option '--id' cannot be used with options '--project-id' or '--version'")
+        raise Exit(4)
+    # go through common parsing before
+    if what is None and id:
+        what = id
+    elif project_id and version:
+        what = f"{project_id}@{version}"
+    elif project_id:
+        what = project_id
+    else:
+        assert what, "Unexpected error while parsing arguments..."
+
+    path = None
+    if what:
+        # then what is it?
+        try:
+            ids = unpack_id(what)
+            project_id,version,path = ids["project_id"],ids["version"],ids["path"]
+        except MalformedID:
+            # not an ArtifactDB ID
+            if "@" in what:
+                try:
+                    project_id,version = tuple(map(str.strip,what.split("@")))
+                except ValueError:
+                    raise InvalidArgument(f"Unable to parse {what!r}")
+            else:
+                project_id,version = what,"latest"
+
+    # sanity checks
+    if not project_id or not version:
+        raise InvalidArgument("Unable to determine a project ID and version")
+    if version == '""':  # we ended up with an empty string
+        raise InvalidArgument("Unable to determine a version")
+    if ":" in project_id:
+        raise InvalidArgument(f"Invalid project ID {project_id!r} (`:` not allowed)")
+
+    return project_id,version,path

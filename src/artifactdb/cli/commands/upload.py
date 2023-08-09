@@ -52,7 +52,7 @@ def upload_command(
         ),
         version:str = Option(
             None,
-            help="Requires --project_id. Upload data as a new version, specified with this " + \
+            help="Requires --project-id. Upload data as a new version, specified with this " + \
                  "option. Setting a specific version usually requires extra permisions, " + \
                  "as this use case is rare and dangerous..."
         ),

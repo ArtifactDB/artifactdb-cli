@@ -1,5 +1,6 @@
 import datetime
 import pathlib
+import importlib
 
 import typer
 import yaml
@@ -132,8 +133,13 @@ def get_config_path():
     cfg_folder = get_config_directory()
     cfg_file = "config"  # TODO: we could have multiple config files
     cfg_path = pathlib.Path(cfg_folder,cfg_file)
-
     return cfg_path
+
+def get_plugins_path():
+    cfg_folder = get_config_directory()
+    plugins_file = "plugins"
+    plugins_path = pathlib.Path(cfg_folder,plugins_file)
+    return plugins_path
 
 def load_config():
     cfg_path = get_config_path()
@@ -153,6 +159,63 @@ def load_config():
 def save_config(cfg):
     cfg_path = get_config_path()
     yaml.dump(cfg,open(cfg_path,"w"))
+
+
+def load_plugins_config():
+    plugins_path = get_plugins_path()
+    # plugins are optional
+    plugins = {"plugins": []}
+    try:
+        plugins = yaml.safe_load(open(plugins_path))
+    except  FileNotFoundError:
+        pass
+    return plugins
+
+
+def load_plugins(app):
+    plugins_cfgs = load_plugins_config()
+    for plugin_cfg in plugins_cfgs["plugins"]:
+        if not "name" in plugin_cfg:
+            print(f"[red]Plugin missing name, skip.[/red] {plugin_cfg!r}")
+            continue
+        name = plugin_cfg["name"]
+        cmds_mod_path = plugin_cfg["module"] + ".commands"  # by plugins dev convention
+        try:
+            mod = importlib.import_module(cmds_mod_path)
+            load_commands(app,mod)
+        except (ModuleNotFoundError, ImportError) as exc:
+            print(f"[red]Unable to load plugin {name!r}: {exc}")
+
+
+def load_command(app, command_module):
+    if hasattr(command_module,"COMMAND_NAME"):
+        # one command? TODO: this could also be by convention the function ending in "_command"
+        if hasattr(command_module,"COMMAND_FUNC"):
+            app.command(
+                name=command_module.COMMAND_NAME
+            )(getattr(command_module,command_module.COMMAND_FUNC))
+        else:
+            app.add_typer(
+                command_module.app,
+                name=command_module.COMMAND_NAME
+            )
+    else:
+        # not containing a command
+        return
+
+
+def load_commands(app, commands_module):
+    # inspect folder's content, looking for command definition
+    cmd_folder = pathlib.Path(commands_module.__path__[0])
+    # TODO: is there a simpler way??
+    for filepath in cmd_folder.iterdir():
+        if filepath.is_file() and filepath.suffix == ".py":
+            cmd_mod_path = f"{commands_module.__name__}.{filepath.stem}"
+            try:
+                cmd_mod = importlib.import_module(cmd_mod_path)
+                load_command(app,cmd_mod)
+            except (ModuleNotFoundError, ImportError) as exc:
+                print(f"[red]Unable to load plugin {name!r}: {exc}")
 
 
 def parse_artifactdb_notation(what, project_id, version, id):

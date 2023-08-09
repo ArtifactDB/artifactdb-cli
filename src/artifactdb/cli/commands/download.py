@@ -24,6 +24,8 @@ from ..cliutils import get_contextual_client, load_current_context, save_context
 
 
 COMMAND_NAME = "download"
+COMMAND_FUNC = "download_command"
+
 app = Typer(help="Download files from an ArtifactDB instance")
 
 CACHE_MODES = enum.Enum('cache_modes', {

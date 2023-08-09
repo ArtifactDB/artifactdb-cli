@@ -20,7 +20,10 @@ from ..cliutils import get_contextual_client, load_current_context, save_context
                        PermissionsInfo, InvalidArgument
 
 
+# single/main command is "upload" with one entrypoint:
 COMMAND_NAME = "upload"
+COMMAND_FUNC = "upload_command"
+
 app = Typer(help="Upload files to an ArtifactDB instance")
 
 ROLE_ACCESS = enum.Enum('read_access', {k:k for k in ("owners","viewers","authenticated","public","none")})

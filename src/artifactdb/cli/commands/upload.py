@@ -1,25 +1,18 @@
-import glob
 import enum
 import pathlib
 import datetime
 import json
-from getpass import getuser
-
-
 import jose.jwt
 import yaml
-import typer
 import dateparser
-from typer import Typer, Argument, Option, Abort, Exit
-from rich import print, print_json
-from rich.prompt import Prompt, Confirm
+from typer import Typer, Argument, Option, Abort
+from rich import print
+from rich.prompt import Confirm
 from rich.syntax import Syntax
 from rich.console import Console
 
 from ..cliutils import (
     get_contextual_client,
-    load_current_context,
-    save_context,
     register_job,
     PermissionsInfo,
     InvalidArgument,

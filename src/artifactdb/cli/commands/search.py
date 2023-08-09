@@ -1,14 +1,7 @@
-import glob
-import enum
-import pathlib
-import datetime
-
 import yaml
-import typer
-import dateparser
-from typer import Typer, Argument, Option, Abort, Exit
-from rich import print, print_json
-from rich.prompt import Prompt, Confirm
+from typer import Typer, Argument, Option, Abort
+from rich import print
+from rich.prompt import Confirm
 from rich.console import Console
 from rich.syntax import Syntax
 
@@ -16,13 +9,11 @@ from artifactdb.utils.misc import get_class_from_classpath
 from artifactdb.cli.formatters.default import YamlFormatter
 from ..cliutils import (
     get_contextual_client,
-    load_current_context,
-    save_context,
-    PermissionsInfo,
-    InvalidArgument,
     load_search_profiles,
     save_search_profile,
     delete_search_profile,
+    list_format_names,
+    find_formatter_classpath,
 )
 
 
@@ -37,28 +28,6 @@ DEFAULT_FORMATTER_CLASS = YamlFormatter
 #########
 # UTILS #
 #########
-
-
-def load_formatters():
-    return enum.Enum(
-        "formatters",
-        {
-            "artifactdb.cli.formatters.default.YamlFormatter": None,
-            "artifactdb.cli.formatters.default.YamlFormatter": "yaml",
-            "artifactdb.cli.formatters.default.JsonFormatter": "json",
-        },
-    )
-
-
-def list_format_names():
-    return [i.value for i in load_formatters()]
-
-
-def find_formatter_classpath(name):
-    try:
-        return [i.name for i in load_formatters() if i.value and i.value == name][0]
-    except IndexError:
-        return None
 
 
 def get_search_profile_names():

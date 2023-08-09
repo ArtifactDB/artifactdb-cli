@@ -1,9 +1,8 @@
 from getpass import getuser
 
 import yaml
-import typer
 from typer import Typer, Argument, Option, Abort, Exit
-from rich import print, print_json
+from rich import print
 from rich.prompt import Prompt, Confirm
 from rich.syntax import Syntax
 from rich.console import Console
@@ -12,14 +11,12 @@ from ..cliutils import (
     get_client,
     load_config,
     save_config,
-    MissingArgument,
     load_contexts,
     load_context,
     ContextNotFound,
     get_current_context,
     save_context,
     get_contextual_client,
-    InvalidArgument,
 )
 
 

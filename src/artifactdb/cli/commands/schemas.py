@@ -4,11 +4,12 @@ from rich.console import Console
 from typer import Typer, Option, Argument
 from pathlib import Path
 import yaml
-import enum
 import json
 
 from ..cliutils import (
     get_contextual_client,
+    list_format_names,
+    find_formatter_classpath,
 )
 
 from artifactdb.utils.misc import get_class_from_classpath
@@ -23,28 +24,6 @@ DEFAULT_FORMATTER_CLASS = YamlFormatter
 #########
 # UTILS #
 #########
-
-
-def load_formatters():
-    return enum.Enum(
-        "formatters",
-        {
-            "artifactdb.cli.formatters.default.YamlFormatter": None,
-            "artifactdb.cli.formatters.default.YamlFormatter": "yaml",
-            "artifactdb.cli.formatters.default.JsonFormatter": "json",
-        },
-    )
-
-
-def list_format_names():
-    return [i.value for i in load_formatters()]
-
-
-def find_formatter_classpath(name):
-    try:
-        return [i.name for i in load_formatters() if i.value and i.value == name][0]
-    except IndexError:
-        return None
 
 
 def list_doc_types(schema_client, checksum=False):

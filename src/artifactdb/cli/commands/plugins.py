@@ -1,28 +1,16 @@
 import sys
-from getpass import getuser
 import subprocess
 import importlib
 import pkgutil
 
 import yaml
-import typer
 from typer import Typer, Argument, Option, Abort, Exit, Context
-from rich import print, print_json
-from rich.prompt import Prompt, Confirm
+from rich import print
 from rich.syntax import Syntax
 from rich.console import Console
 
 import artifactdb.cli.plugins
-from ..cliutils import (
-    get_client,
-    load_config,
-    save_config,
-    MissingArgument,
-    load_plugins_config,
-    get_plugins_path,
-    load_plugins,
-    InvalidArgument,
-)
+from ..cliutils import load_plugins_config, get_plugins_path
 
 
 COMMAND_NAME = "plugins"

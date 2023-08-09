@@ -1,27 +1,19 @@
 import datetime
 import enum
 import json
-from getpass import getuser
-
 import yaml
-import typer
-from typer import Typer, Argument, Option, Abort, Exit
-from rich import print, print_json
-from rich.prompt import Prompt, Confirm
+from typer import Typer, Argument, Option, Exit
+from rich import print
 from rich.syntax import Syntax
 from rich.console import Console
 
+from artifactdb.utils.misc import get_class_from_classpath
+
 from ..cliutils import (
     get_contextual_client,
-    load_config,
-    save_config,
-    MissingArgument,
-    load_contexts,
-    load_context,
-    ContextNotFound,
     load_current_context,
-    InvalidArgument,
     save_context,
+    find_formatter_classpath,
 )
 
 
@@ -130,7 +122,12 @@ def display_job_status(job_status, format=None, verbose=False):
         if verbose and job_status["status"] == "FAILURE":
             console.print(Syntax(job_status["traceback"], "python", padding=(0, 1)))
     else:
-        console.print(Syntax(job_status, format))
+        fmt_class = None
+        fmt_classpath = find_formatter_classpath(format)
+        if fmt_classpath:
+            fmt_class = get_class_from_classpath(fmt_classpath)
+        fmt = fmt_class()
+        fmt.format_result(job_status, console)
 
 
 def is_job_prunable(job_status, prunable_state):

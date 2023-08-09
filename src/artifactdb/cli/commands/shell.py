@@ -1,6 +1,5 @@
 from typer import Typer, Context
-from rich import print, print_json
-from rich.console import Console
+from rich import print
 
 from ..cliutils import (
     get_historyfile_path,

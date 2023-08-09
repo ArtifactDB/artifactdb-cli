@@ -1,12 +1,9 @@
-from getpass import getuser
 import json
 import copy
-
 import yaml
-import typer
 from typer import Typer, Argument, Option, Abort, Exit
-from rich import print, print_json
-from rich.prompt import Prompt, Confirm
+from rich import print
+from rich.prompt import Confirm
 from rich.syntax import Syntax
 from rich.console import Console
 
@@ -14,19 +11,10 @@ from artifactdb.client.excavator.excavator import ValidationError
 from artifactdb.client.exceptions import ADBClientError
 from artifactdb.client.models import PermissionsInfo
 from ..cliutils import (
-    get_client,
-    load_config,
-    save_config,
     MissingArgument,
-    load_contexts,
-    load_context,
-    ContextNotFound,
-    get_current_context,
-    save_context,
     get_contextual_client,
     parse_artifactdb_notation,
     register_job,
-    InvalidArgument,
     ROLE_ACCESS,
 )
 

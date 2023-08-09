@@ -386,3 +386,25 @@ def parse_artifactdb_notation(what, project_id, version, id):
         raise InvalidArgument(f"Invalid project ID {project_id!r} (`:` not allowed)")
 
     return project_id, version, path
+
+
+def load_formatters():
+    return enum.Enum(
+        "formatters",
+        {
+            "artifactdb.cli.formatters.default.YamlFormatter": None,
+            "artifactdb.cli.formatters.default.YamlFormatter": "yaml",
+            "artifactdb.cli.formatters.default.JsonFormatter": "json",
+        },
+    )
+
+
+def list_format_names():
+    return [i.value for i in load_formatters()]
+
+
+def find_formatter_classpath(name):
+    try:
+        return [i.name for i in load_formatters() if i.value and i.value == name][0]
+    except IndexError:
+        return None

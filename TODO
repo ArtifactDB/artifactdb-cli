@@ -1,0 +1,15 @@
+test for command "context":
+- create context for olympusapi1 with prefilled values
+- create context for dev.cerberus with manual values
+- check create from scratch (no context config file)
+
+test for command "upload":
+-
+
+test for command "upload":
+
+test for command "download":
+- OLA00000002  (fails ok, needs a version for now
+- OLA00000002@latest (fails ok, latest not supported for now)
+- OLA00000002@23456  (version doesn't exist, "no artifacts found for ...")
+

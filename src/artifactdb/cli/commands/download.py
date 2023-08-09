@@ -17,6 +17,8 @@ from rich.console import Console
 from pybiocfilecache import BiocFileCache
 
 from artifactdb.identifiers.aid import pack_id, unpack_id
+from artifactdb.utils.misc import get_class_from_classpath
+from artifactdb.client.components.cache.nocache_controller import NoCacheController
 from ..cliutils import get_contextual_client, load_current_context, save_context, \
                        PermissionsInfo, InvalidArgument, parse_artifactdb_notation
 
@@ -24,6 +26,11 @@ from ..cliutils import get_contextual_client, load_current_context, save_context
 COMMAND_NAME = "download"
 app = Typer(help="Download files from an ArtifactDB instance")
 
+CACHE_MODES = enum.Enum('cache_modes', {
+    "artifactdb.client.components.cache.nocache_controller.NoCacheController": None,
+    "artifactdb.client.components.cache.nocache_controller.NoCacheController": "no-cache",
+    "artifactdb.client.components.cache.bioc_controller.BiocFileCacheController": "biocfilecache",
+})
 
 #########
 # UTILS #
@@ -34,26 +41,33 @@ def download_one_artifact(client, project_id, version, path, dest, overwrite=Fal
     if tgt.exists() and not overwrite:
         print(f"'{tgt}' exists, not overwriting")
         raise Abort()
-    # excavator uses a cache for downloaded files so we'll manually move the file to
-    # the "dest" folder, until excavator can do that
     aid = pack_id(dict(project_id=project_id,version=version,path=path))
     outf = client.get_resource_data(aid)
-    tgt.parent.mkdir(parents=True,exist_ok=True)
-    outf.rename(tgt)
-    # purge damn cache otherwise it thinks it's still there
-    try:
-        cache = BiocFileCache(client._cache_controller.cache_dir)
-        cache.remove(aid)
-    except FileNotFoundError:
-        pass  # we deleted it, that's fine
-    pass
+    return outf
+
 
 def download_all_artifacts(client, project_id, version, dest, overwrite=False):
     docs = client.search(f'_extra.project_id:"{project_id}" AND _extra.version:"{version}"')
+    at_least_one = False
     for doc in docs:
         path = unpack_id(doc["_extra"]["id"])["path"]
         download_one_artifact(client, project_id, version, path, dest, overwrite=overwrite)
-    
+        at_least_one = True
+    if not at_least_one:
+        print(f"No artifacts found for '{project_id}@{version}'")
+        raise Abort()
+
+
+def list_cache_modes():
+    return [i.value for i in CACHE_MODES]
+
+
+def find_cache_class(mode):
+    cls = [i.name for i in CACHE_MODES if i.value == mode]
+    if not cls:
+        raise InvalidArgument(f"Cache mode {mode!r} is not supported")
+    return cls.pop()
+
 
 ############
 # COMMANDS #
@@ -85,6 +99,11 @@ def download_command(
             ".",
             help="Path to folder containing the files to download, defaulting to current folder.",
         ),
+        cache:str = Option(
+            None,
+            help="Cache mode used to cache files while downloaded. Default is no cache",
+            autocompletion=list_cache_modes,
+        ),
         verbose:bool = Option(
             False,
             help="Print information about what the command is performing",
@@ -102,7 +121,16 @@ def download_command(
     print("version: %s" % version)
     print("path: %s" % path)
 
-    client = get_contextual_client()
+    cache_class = NoCacheController
+    if cache:
+        cls = find_cache_class(cache)
+        cache_class = get_class_from_classpath(cls)
+        print(f"cache controller: {cache_class.__name__!r}")
+
+    client = get_contextual_client(
+        cache_controller=cache_class,
+        cache_dir=dest,
+    )
     if path:
         download_one_artifact(client, project_id, version, path, dest=dest, overwrite=overwrite)
     else:

@@ -186,6 +186,7 @@ def parse_artifactdb_notation(what, project_id, version, id):
                 except ValueError:
                     raise InvalidArgument(f"Unable to parse {what!r}")
             else:
+                raise InvalidArgument("Download a project without a version number is not supported at the moment.")
                 project_id,version = what,"latest"
 
     # sanity checks
@@ -195,5 +196,8 @@ def parse_artifactdb_notation(what, project_id, version, id):
         raise InvalidArgument("Unable to determine a version")
     if ":" in project_id:
         raise InvalidArgument(f"Invalid project ID {project_id!r} (`:` not allowed)")
+
+    if version.lower() == "latest":
+        raise InvalidArgument("`latest` is not supported at the moment")
 
     return project_id,version,path

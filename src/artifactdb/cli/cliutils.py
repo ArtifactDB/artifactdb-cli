@@ -5,18 +5,122 @@ import typer
 import yaml
 from rich import print, print_json
 
-from artifactdb.client.excavator import Excavator
+import harpocrates
+from artifactdb.client.excavator import Excavator, PermissionsInfo
 
 
 class MissingArgument(Exception): pass
+class ContextNotFound(Exception): pass
+class InvalidArgument(Exception): pass
+
 
 
 def get_client(url, *args, **kwargs):
     return Excavator(url,*args,**kwargs)
 
 
+def build_auth(auth_info):
+    url = auth_info["url"]
+    if "/realms" in url:
+        parts = url.rsplit("/",2)
+        if len(parts) != 3 or parts[-2] != "realms":
+            raise InvalidArgument("Auth. URL not properly formatted, can't extract realm")
+        realm_name = parts[-1]
+        url = parts[0]
+    auth_kwargs = {
+        "server_url": url,
+        "realm": realm_name,
+    }
+    if auth_info.get("service_account_id"):
+        is_svc_account = True
+        auth_kwargs["client_id"] = auth_info["service_account_id"]
+    else:
+        is_svc_account = False
+        auth_kwargs["client_id"] = auth_info["client_id"]
+        auth_kwargs["user_name"] = auth_info["username"]
+
+    # first pass, not setting param asking for password or secret
+    # possibly using cached tokens
+    try:
+        return harpocrates.Authenticate(**auth_kwargs)
+    except harpocrates.exceptions.HarpException:
+        # try again, to force collecting pass/secret
+        if is_svc_account:
+            auth_kwargs["client_secret"] = True
+        else:
+            auth_kwargs["password"] = True
+        return harpocrates.Authenticate(**auth_kwargs)
+
+
+def get_contextual_client():
+    ctx = load_current_context()
+    auth = build_auth(ctx["auth"])
+    client = get_client(
+        url=ctx["url"],
+        auth=auth,
+        project_prefix=ctx["project_prefix"],
+    )
+
+    return client
+
+
+def load_contexts():
+    cfg = load_config()
+    return cfg["contexts"]
+
+
+def load_context(name):
+    contexts = load_contexts()
+    for ctx in contexts:
+        if ctx["name"] == name:
+            return ctx
+    raise ContextNotFound(f"No such context: {name!r}")
+
+
+def save_context(name, context, overwrite=False):
+    assert name
+    try:
+        load_context(name)
+        if overwrite:
+            print(f"Overwriting existing context {name!r}")
+        else:
+            print(f"Context {name!r} already exists")
+            raise typer.Exit(code=1)
+    except ContextNotFound:
+        pass  # all good, doesn't exist yet
+    # no matter what, try to find one with the same name to remove it
+    contexts = load_contexts()
+    idx = None
+    for i,ctx in enumerate(contexts):
+        if ctx["name"] == name:
+            idx= i
+            break
+    if not idx is None:
+        contexts.pop(idx)
+    contexts.append(context)
+    cfg = load_config()
+    cfg["contexts"] = contexts
+    save_config(cfg)
+
+
+
+
+def load_current_context():
+    ctx_name = get_current_context()
+    return load_context(ctx_name)
+
+
+def get_current_context():
+    cfg = load_config()
+    current = cfg["current-context"]
+    if current is None:
+        raise ContextNotFound("No current context found, `use` command to set one")
+    return current
+
+
 def get_config_directory():
     return typer.get_app_dir("artifactdb-cli")
+
 
 def get_config_path():
     cfg_folder = get_config_directory()

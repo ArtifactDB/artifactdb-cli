@@ -135,11 +135,20 @@ def get_config_path():
     cfg_path = pathlib.Path(cfg_folder,cfg_file)
     return cfg_path
 
+
 def get_plugins_path():
     cfg_folder = get_config_directory()
     plugins_file = "plugins"
     plugins_path = pathlib.Path(cfg_folder,plugins_file)
     return plugins_path
+
+
+def get_historyfile_path():
+    cfg_folder = get_config_directory()
+    hist_file = "history"
+    hist_path = pathlib.Path(cfg_folder,hist_file)
+    return hist_path
+
 
 def load_config():
     cfg_path = get_config_path()

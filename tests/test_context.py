@@ -1,6 +1,5 @@
 from typer.testing import CliRunner
 from artifactdb.cli.main import app
-import typer
 
 runner = CliRunner()
 # TODO: auth from github.com
@@ -41,8 +40,11 @@ def test_adb_context_create_no_url():
 def test_adb_context_create_no_auth_url():
     result = runner.invoke(app, ["context", "create", olumpus_api1_url], input="\n")
     assert result.exit_code == 1
-    result_stdout = result.stdout.replace('\n', '')
-    assert "Couldn't not determine authentication issue URL, please provide '--auth-url' argument" in result_stdout
+    result_stdout = result.stdout.replace("\n", "")
+    assert (
+        "Couldn't not determine authentication issue URL, please provide '--auth-url' argument"
+        in result_stdout
+    )
     assert "Aborted" in result_stdout
 
 
@@ -64,7 +66,6 @@ def test_adb_context_create():
         ["context", "create", "--auth-url", auth_url, olumpus_api1_url],
         input="olympus-test-context\n\n\n\ny\n",
     )
-    print(result.stdout)
     assert result.exit_code == 0
 
 
@@ -155,6 +156,20 @@ def test_adb_context_create_data_provided_via_options_svc_acc_and_end_user_shoul
     assert (
         "Option --auth-service-account-id can be used with -auth-client-id or --auth-username, choose either"
         " service account or end-user authentication" in result_stdout
+    )
+
+
+def test_adb_context_create_no_project_prefix():
+    result = runner.invoke(
+        app,
+        ["context", "create", "--auth-url", auth_url, cereberus_url],
+        input="cerberus-test-context\nalmighty\n\ny\n",
+    )
+    result_stdout = result.stdout.replace("\n", "")
+    assert result.exit_code == 0
+    assert (
+        "ArtifactDB instance didn't provide project prefix information, will use default one (or use"
+        " --project-prefix option to specify another one)" in result_stdout
     )
 
 

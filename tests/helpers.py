@@ -11,4 +11,3 @@ CONTEXT_DATA = """contexts:
   url: https://...
 current-context: olympus-api-1-uat
 last-modification: '2023-01-31T13:06:02.259398'"""
-

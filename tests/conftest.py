@@ -17,6 +17,7 @@ runner = CliRunner()
 
 
 cfg_path = f"{typer.get_app_dir('artifactdb-cli')}/config"
+files_to_upload = f"{os.environ['HOME']}/upload"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -132,12 +133,11 @@ def generate_files_to_upload():
 
 @pytest.fixture()
 def upload_new_project():
-    path = f"{os.environ['HOME']}/upload"
-    result = runner.invoke(app, ["upload", "--verbose", path])
+    result = runner.invoke(app, ["upload", "--verbose", files_to_upload])
     # check if upload was successful
     assert result.exit_code == 0
     # wait few seconds for upload to be finished
-    time.sleep(5)
+    time.sleep(4)
     # get project id and version
     project_id_and_version = re.findall("test-OLA.*:", result.stdout)[0][:-1]
     project_id = project_id_and_version[:-2]
@@ -148,4 +148,17 @@ def upload_new_project():
     s = result.stdout
     job_id = s[s.find(start)+len(start):s.rfind(end)]
     uploaded_data = {"project_id": project_id, "project_version": project_version, "job_id": job_id}
+    return uploaded_data
+
+
+@pytest.fixture()
+def upload_new_version(upload_new_project):
+    uploaded_data = upload_new_project
+    project_id = uploaded_data["project_id"]
+    result = runner.invoke(app, ["upload", "--project-id", project_id, files_to_upload])
+    # wait few seconds for upload to be finished
+    time.sleep(4)
+    # check if upload was successful
+    assert result.exit_code == 0
+    uploaded_data["project_version"] = "2"
     return uploaded_data

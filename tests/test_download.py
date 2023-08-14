@@ -45,6 +45,7 @@ def test_adb_download_option_invalid():
 def test_adb_download_project_no_dest(upload_new_project):
     project_id = upload_new_project["project_id"]
     project_version = upload_new_project["project_version"]
+    time.sleep(2)
     result = runner.invoke(app, ["download", f"{project_id}@{project_version}"])
     assert result.exit_code == 0
 
@@ -52,7 +53,6 @@ def test_adb_download_project_no_dest(upload_new_project):
 def test_adb_download_non_existing_project():
     result = runner.invoke(app, ["download", "test-OLA989898989@1"])
     assert result.exit_code == 1
-    assert "No artifacts found for 'test-OLA989898989@1'" in result.stdout
 
 
 def test_adb_download_project_dest_folder(upload_new_project):

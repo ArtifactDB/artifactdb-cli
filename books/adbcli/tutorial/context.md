@@ -40,7 +40,7 @@ answer. Specifically, it may complain about not finding the authentication issue
 a rule of thumb:
 
 - if creating a context pointing to a production instance, use
-  `--auth-url=https://todo
+  `--auth-url=https://todo`
 - if dev or uat instance, use `--auth-url=https://todo`
 
 Because `olympusapi2` is recent, it provides that information, and `adb` works for you.

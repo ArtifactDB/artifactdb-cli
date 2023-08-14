@@ -39,6 +39,10 @@ pandoc-options:
 
 \pagebreak
 
+!include design.md
+
+\pagebreak
+
 !include faq.md
 
 \pagebreak

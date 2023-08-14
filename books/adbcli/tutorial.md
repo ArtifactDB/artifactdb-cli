@@ -20,3 +20,5 @@
 
 !include tutorial/permissions.md
 
+!include tutorial/epilogue.md
+

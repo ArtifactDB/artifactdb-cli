@@ -7,15 +7,15 @@ pip install 'artifactdb-cli'
 ```
 
 After the installation, an executable named `adb` is available. We can verify that by typing `adb version`. Make sure
-you have at least version `0.2.0`.
+you have at least version `0.3.0`.
 
 ```
 $ adb version
 ```
 gives something similar to:
 ```
-ArtifactDB-CLI version '0.2.0'
-ArtifactDB-client version '0.2.0'
+ArtifactDB-CLI version '0.3.0'
+ArtifactDB-client version '0.3.2'
 ```
 
 The source code found in the Git repo https://github.com/artifactdb/artifactdb-cli can also be used:

@@ -37,6 +37,7 @@ def test_adb_download_option_help():
 
 def test_adb_download_option_invalid():
     result = runner.invoke(app, ["download", "--some-invalid-option"])
+    assert result.exit_code == 2
     assert "Error" in result.stdout
     assert "No such option: --some-invalid-option" in result.stdout
 

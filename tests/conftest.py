@@ -134,10 +134,18 @@ def generate_files_to_upload():
 def upload_new_project():
     path = f"{os.environ['HOME']}/upload"
     result = runner.invoke(app, ["upload", "--verbose", path])
+    # check if upload was successful
+    assert result.exit_code == 0
     # wait few seconds for upload to be finished
-    time.sleep(10)
+    time.sleep(5)
+    # get project id and version
     project_id_and_version = re.findall("test-OLA.*:", result.stdout)[0][:-1]
     project_id = project_id_and_version[:-2]
     project_version = project_id_and_version[-1:]
-    uploaded_data = {"project_id": project_id, "project_version": project_version}
+    # get job id
+    start = "job_id='"
+    end = "', job_url"
+    s = result.stdout
+    job_id = s[s.find(start)+len(start):s.rfind(end)]
+    uploaded_data = {"project_id": project_id, "project_version": project_version, "job_id": job_id}
     return uploaded_data

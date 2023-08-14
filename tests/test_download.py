@@ -44,7 +44,6 @@ def test_adb_download_option_invalid():
 def test_adb_download_project_no_dest(upload_new_project):
     project_id = upload_new_project["project_id"]
     project_version = upload_new_project["project_version"]
-    time.sleep(2)
     result = runner.invoke(app, ["download", f"{project_id}@{project_version}"])
     assert result.exit_code == 0
 

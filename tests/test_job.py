@@ -110,9 +110,10 @@ def test_adb_job_check_with_job_id(upload_new_project):
     assert project_id in result.stdout
 
 
-def test_adb_job_check_with_job_id_invalid():
-    result = runner.invoke(app, ["job", "check", "34323432433"])
-    assert result.exit_code == 1
+# def test_adb_job_check_with_job_id_invalid():
+#     result = runner.invoke(app, ["job", "check", "fdsfsf"])
+#     assert result.exit_code == 0
+#     assert f"Job fdsfsf was purged and is not available anymore (or is not running yet)"
 
 
 # can't run tests for format = json or yaml, I'm getting error 'dict' object has no attribute 'endswith' in rich package

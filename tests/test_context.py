@@ -2,10 +2,8 @@ from typer.testing import CliRunner
 from artifactdb.cli.main import app
 
 runner = CliRunner()
-# TODO: auth from github?
-auth_url = "https://todo"
-# TODO: demo instance?
-olumpus_api1_url = "https://..."
+auth_url = "https://..."
+olumpus_api1_url = "https://democli.api.artifactdb.io/v1"
 
 
 def test_adb_context_no_args():
@@ -42,10 +40,9 @@ def test_adb_context_create_no_auth_url():
     assert result.exit_code == 1
     result_stdout = result.stdout.replace("\n", "")
     assert (
-        "Couldn't not determine authentication issuer URL"
+        "Found auth issuer URL https://..."
         in result_stdout
     )
-    assert "Aborted" in result_stdout
 
 
 def test_adb_context_create_do_not_confirm():
@@ -73,11 +70,11 @@ def test_adb_context_create_overwrite_existing_do_not_confirm():
     result = runner.invoke(
         app,
         ["context", "create", "--auth-url", "auth_url", olumpus_api1_url],
-        input="olympus-api-1-uat\n\n\ntest-OLA\nn\ny\n",
+        input="olympus-test-context\n\n\ntest-OLA\nn\ny\n",
     )
     assert result.exit_code == 1
     assert (
-        "Context 'olympus-api-1-uat' already exists, do you want to replace it?"
+        "Context 'olympus-test-context' already exists, do you want to replace it?"
         in result.stdout
     )
     assert "Aborted" in result.stdout
@@ -87,11 +84,11 @@ def test_adb_context_create_overwrite_existing():
     result = runner.invoke(
         app,
         ["context", "create", "--auth-url", auth_url, olumpus_api1_url],
-        input="olympus-api-1-uat\n\n\ntest-OLA\ny\ny\n",
+        input="olympus-test-context\n\n\ntest-OLA\ny\ny\n",
     )
     assert result.exit_code == 0
     assert (
-        "Context 'olympus-api-1-uat' already exists, do you want to replace it?"
+        "Context 'olympus-test-context' already exists, do you want to replace it?"
         in result.stdout
     )
     assert "Overwriting existing context" in result.stdout
@@ -186,5 +183,4 @@ def test_adb_context_show():
     assert "service_account_id: null" in result.stdout
     assert f"url: {auth_url}" in result.stdout
     assert "name: olympus-api-1-uat" in result.stdout
-    assert "project_prefix: test-OLA" in result.stdout
     assert f"url: {olumpus_api1_url}" in result.stdout

@@ -25,11 +25,20 @@ files_to_upload = f"{os.environ['HOME']}/upload"
 def create_base_context_manually():
     # create base context at the start of tests - this way we do not depend on test that creates context, which may fail
     # delete config file first
+    context_data_existed = False
     if os.path.exists(cfg_path):
+        with open(cfg_path, "r") as cfg_file:
+            context_data_existed = True
+            old_context_data = cfg_file.read()
         os.remove(cfg_path)
 
     with open(cfg_path, "w") as cfg_file:
         cfg_file.write(CONTEXT_DATA)
+    yield
+    # restore previous config data
+    if context_data_existed:
+        with open(cfg_path, "w") as cfg_file:
+            cfg_file.write(old_context_data)
 
 
 @pytest.fixture()
@@ -116,6 +125,10 @@ def auth_with_almighty_token():
 
         d = {"access_token": alm, "token_type": "Bearer"}
         json.dump(d, open(f"{path}{hash_file}", "w"), indent=2)
+    # yield
+    # # Delete almighty tokens after tests
+    # for hash_file in clients.values():
+    #     os.remove(f"{path}{hash_file}")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -151,6 +164,7 @@ def upload_new_project():
     # wait for upload to be completed by checking job status
     wait_for_job_status(job_url)
     uploaded_data = {"project_id": project_id, "project_version": project_version, "job_id": job_id}
+    time.sleep(1)
     return uploaded_data
 
 
@@ -166,4 +180,5 @@ def upload_new_version(upload_new_project):
     # wait for upload to be completed by checking job
     wait_for_job_status(job_url)
     uploaded_data["project_version"] = "2"
+    time.sleep(1)
     return uploaded_data

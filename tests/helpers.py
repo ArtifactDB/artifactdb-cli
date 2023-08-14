@@ -20,7 +20,7 @@ CONTEXT_DATA = """contexts:
     username: testuser
   name: olympus-api-1-uat
   project_prefix: test-OLA
-  url: https://...
+  url: https://dev-olympusapi1.genomics.roche.com/v1
 current-context: olympus-api-1-uat
 last-modification: '2023-01-31T13:06:02.259398'"""
 

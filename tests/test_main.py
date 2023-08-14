@@ -45,7 +45,7 @@ def test_adb_shell():
     result = runner.invoke(app, "shell")
     assert result.exit_code == 0
     assert "olympus-api-1-uat" in result.stdout
-    assert "https://democli.api.artifactdb.io/v1/" in result.stdout
+    assert "https://dev-olympusapi1.genomics.roche.com/v1" in result.stdout
 
 
 def test_adb_shell_help():

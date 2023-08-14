@@ -1,3 +1,5 @@
+import time
+
 from typer.testing import CliRunner
 from artifactdb.cli.main import app
 import pytest
@@ -54,6 +56,7 @@ def test_adb_search_project_id(upload_new_project):
 
 def test_adb_search_project_id_and_version(upload_new_project):
     project_id = upload_new_project["project_id"]
+    time.sleep(2)
     result = runner.invoke(app, ["search", "--project-id", project_id, "--version", "1"])
     assert result.exit_code == 0
     assert project_id in result.stdout
@@ -78,9 +81,10 @@ def test_adb_search_option_fields(upload_new_project):
     assert "test_file3.txt" in result.stdout
 
 
-@pytest.mark.parametrize("size,input_needed", [("1", "y\ny\ny\n"), ("2", "y\n"), ("3", "y\n"), ("4", None)])
+@pytest.mark.parametrize("size,input_needed", [("1", "y\ny\ny\ny\n"), ("2", "y\ny\n"), ("3", "y\n"), ("5", None)])
 def test_adb_search_option_size(upload_new_project, size, input_needed):
     project_id = upload_new_project["project_id"]
+    print(project_id)
     result = runner.invoke(app, ["search", "--project-id", project_id, "--size", size], input=input_needed)
     assert result.exit_code == 0
     assert "No more results" in result.stdout

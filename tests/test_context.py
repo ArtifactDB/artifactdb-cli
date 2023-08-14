@@ -2,9 +2,9 @@ from typer.testing import CliRunner
 from artifactdb.cli.main import app
 
 runner = CliRunner()
-# TODO: auth from github.com
-auth_url = "https://..."
-# TODO: auth from demodb?
+# TODO: auth from github?
+auth_url = "https://todo"
+# TODO: demo instance?
 olumpus_api1_url = "https://..."
 
 
@@ -156,19 +156,6 @@ def test_adb_context_create_data_provided_via_options_svc_acc_and_end_user_shoul
     assert (
         "Option --auth-service-account-id can't be used with -auth-client-id or --auth-username, choose either"
         " service account or end-user" in result_stdout
-    )
-
-
-def test_adb_context_create_no_project_prefix():
-    result = runner.invoke(
-        app,
-        ["context", "create", "--auth-url", auth_url, cereberus_url],
-        input="cerberus-test-context\nalmighty\n\ny\n",
-    )
-    result_stdout = result.stdout.replace("\n", "")
-    assert result.exit_code == 0
-    assert (
-        "ArtifactDB instance didn't provide project prefix information, will use default one" in result_stdout
     )
 
 

@@ -137,7 +137,7 @@ def upload_new_project():
     # check if upload was successful
     assert result.exit_code == 0
     # wait few seconds for upload to be finished
-    time.sleep(4)
+    time.sleep(5)
     # get project id and version
     project_id_and_version = re.findall("test-OLA.*:", result.stdout)[0][:-1]
     project_id = project_id_and_version[:-2]
@@ -157,7 +157,7 @@ def upload_new_version(upload_new_project):
     project_id = uploaded_data["project_id"]
     result = runner.invoke(app, ["upload", "--project-id", project_id, files_to_upload])
     # wait few seconds for upload to be finished
-    time.sleep(4)
+    time.sleep(5)
     # check if upload was successful
     assert result.exit_code == 0
     uploaded_data["project_version"] = "2"

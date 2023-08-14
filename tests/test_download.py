@@ -4,7 +4,6 @@ import time
 import pytest
 from typer.testing import CliRunner
 from artifactdb.cli.main import app
-from helpers import clear_typer_output
 
 runner = CliRunner()
 

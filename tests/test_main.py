@@ -1,3 +1,5 @@
+import time
+
 from typer.testing import CliRunner
 from artifactdb.cli.main import app
 
@@ -50,3 +52,42 @@ def test_adb_shell_help():
     result = runner.invoke(app, ["shell", "--help"])
     assert result.exit_code == 0
     assert "Launch interactive shell" in result.stdout
+
+
+def test_adb_logout():
+    result = runner.invoke(app, "logout")
+    assert result.exit_code == 0
+    assert "Anonymous access enabled" in result.stdout
+
+
+def test_adb_logout_with_purge():
+    # login first
+    result = runner.invoke(app, "login")
+    assert result.exit_code == 0
+    result = runner.invoke(app, "logout", "--purge")
+    assert result.exit_code == 0
+    assert "Anonymous access enabled" in result.stdout
+
+
+def test_adb_logout_help():
+    result = runner.invoke(app, ["logout", "--help"])
+    assert result.exit_code == 0
+    assert "--purge" in result.stdout
+    assert "--no-purge" in result.stdout
+
+def test_adb_login():
+    result = runner.invoke(app, "login")
+    assert result.exit_code == 0
+    assert "Authenticated access enabled for context" in result.stdout
+    assert "olympus-api-1-uat" in result.stdout
+
+
+def test_adb_login_help():
+    result = runner.invoke(app, ["login", "--help"])
+    assert result.exit_code == 0
+    assert "Switch to authenticated access." in result.stdout
+
+
+
+
+

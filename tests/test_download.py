@@ -7,10 +7,7 @@ runner = CliRunner()
 def test_adb_download_no_args():
     result = runner.invoke(app, "download")
     assert result.exit_code == 1
-    assert (
-        str(result)
-        == "<Result AssertionError('Unexpected error while parsing arguments...')>"
-    )
+    assert "MissingArgument()" in str(result)
 
 
 def test_adb_download_option_help():

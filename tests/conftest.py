@@ -4,8 +4,8 @@ import typer
 import os
 from keycloak import KeycloakOpenID
 import requests
-import os.path
 from helpers import CONTEXT_DATA
+import yaml
 
 
 cfg_path = f"{typer.get_app_dir('artifactdb-cli')}/config"
@@ -45,12 +45,23 @@ def set_current_context_in_cfg():
 
 @pytest.fixture(scope='session', autouse=True)
 def auth_with_almighty_token():
-    # Configure client
+    # get credentials for service account
+    if os.environ['HOME'] == "/home/adb-user":
+        path = "/app/run/secrets/keycloak/svc-credentials.yaml"
+    else:
+        path = f"{os.environ['HOME']}/svc-credentials.yaml"
+
+    with open(path, 'r') as stream:
+        try:
+            svc_credentials = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+
     # TODO: use github auth?
     keycloak_openid = KeycloakOpenID(server_url="https://...",
-                                     client_id="hermes-svc",
+                                     client_id=svc_credentials['client_id'],
                                      realm_name="gene",
-                                     client_secret_key="")
+                                     client_secret_key=svc_credentials['client_secret'])
 
     # # Get Token as hermes-svc
     token = keycloak_openid.token(grant_type='client_credentials')
@@ -75,9 +86,22 @@ def auth_with_almighty_token():
         # get almighty token
         response = requests.post(f"{url}/token", json=payload,
                                  headers={"Authorization": "Bearer {}".format(token)})
+
         alm = response.json()["almighty_token"]
-        path_deployment = "/home/adb-user/.cache/harpocrates/"
-        path_local = "/Users/blonskij/.cache/harpocrates/"
+
+        path = f"{os.environ['HOME']}/.cache/harpocrates/"
 
         d = {"access_token": alm, "token_type": "Bearer"}
-        json.dump(d, open(f"{path_deployment}{hash_file}", "w"), indent=2)
+        json.dump(d, open(f"{path}{hash_file}", "w"), indent=2)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def generate_file_to_upload():
+    path = f"{os.environ['HOME']}/upload"
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    with open(f"{path}/upload_test_file.txt", "w") as f:
+        data = "Some random text file"
+        f.write(data)
+

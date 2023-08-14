@@ -1,8 +1,11 @@
 from typer.testing import CliRunner
 from artifactdb.cli.main import app
 import pytest
+import os
 
 runner = CliRunner()
+
+path = f"{os.environ['HOME']}/upload/"
 
 
 def test_adb_upload_no_args():
@@ -45,46 +48,46 @@ def test_adb_upload_option_invalid():
 
 
 def test_adb_upload_new_project():
-    result = runner.invoke(app, ["upload", "/Users/blonskij/data_to_upload/test"])
+    result = runner.invoke(app, ["upload", path])
     assert result.exit_code == 0
     assert "Upload completed." in result.stdout
 
 
 def test_adb_upload_with_existing_project_id():
-    result = runner.invoke(app, ["upload", "--project-id", "test-OLA000000001", "/Users/blonskij/data_to_upload/test"])
+    result = runner.invoke(app, ["upload", "--project-id", "test-OLA000000001", path])
     print(result.stdout)
     assert result.exit_code == 0
     assert "Upload completed." in result.stdout
 
 
 def test_adb_upload_with_non_existing_project_id():
-    result = runner.invoke(app, ["upload", "--project-id", "test-OLA99999999", "/Users/blonskij/data_to_upload/test"])
+    result = runner.invoke(app, ["upload", "--project-id", "test-OLA99999999", path])
 
     assert result.exit_code == 1
 
 
 def test_adb_upload_with_existing_project_id_and_version():
-    result = runner.invoke(app, ["upload", "--project-id", "test-OLA000000002", "--version", "2", "/Users/blonskij/data_to_upload/test"])
+    result = runner.invoke(app, ["upload", "--project-id", "test-OLA000000002", "--version", "2", path])
     print(result.stdout)
     assert result.exit_code == 0
     assert "Upload completed." in result.stdout
 
 
 def test_adb_upload_with_only_version_should_fail():
-    result = runner.invoke(app, ["upload", "--version", "9", "/Users/blonskij/data_to_upload/test"])
+    result = runner.invoke(app, ["upload", "--version", "9", path])
     assert result.exit_code == 1
     assert "If 'version' is set the 'project_id' must also be set." in str(result)
 
 
 def test_adb_upload_with_owners():
-    result = runner.invoke(app, ["upload", "--owners", "testuser,batman", "/Users/blonskij/data_to_upload/test"])
+    result = runner.invoke(app, ["upload", "--owners", "testuser,batman", path])
     print(result.stdout)
     assert result.exit_code == 0
     assert "Upload completed." in result.stdout
 
 
 def test_adb_upload_with_viewers():
-    result = runner.invoke(app, ["upload", "--viewers", "testuser,batman", "/Users/blonskij/data_to_upload/test"])
+    result = runner.invoke(app, ["upload", "--viewers", "testuser,batman", path])
     print(result.stdout)
     assert result.exit_code == 0
     assert "Upload completed." in result.stdout
@@ -92,45 +95,45 @@ def test_adb_upload_with_viewers():
 
 @pytest.mark.parametrize("role", ["owners", "viewers", "authenticated", "public", "none"])
 def test_adb_upload_with_read_access(role):
-    result = runner.invoke(app, ["upload", "--read-access", role, "/Users/blonskij/data_to_upload/test"])
+    result = runner.invoke(app, ["upload", "--read-access", role, path])
     assert result.exit_code == 0
     assert "Upload completed." in result.stdout
 
 
 @pytest.mark.parametrize("role", ["owners", "viewers", "authenticated", "public", "none"])
 def test_adb_upload_with_write_access(role):
-    result = runner.invoke(app, ["upload", "--write-access", role, "/Users/blonskij/data_to_upload/test"])
+    result = runner.invoke(app, ["upload", "--write-access", role, path])
     assert result.exit_code == 0
     assert "Upload completed." in result.stdout
 
 
 # consult with Sebastien
 # def test_adb_upload_with_upload_mode():
-#     result = runner.invoke(app, ["upload", "--upload-mode", "sts-credentials:boto3", "/Users/blonskij/data_to_upload/test"])
+#     result = runner.invoke(app, ["upload", "--upload-mode", "sts-credentials:boto3", path])
 #     print(result.stdout)
 #     assert result.exit_code == 0
 #     assert "Upload completed." in result.stdout
 
 def test_adb_upload_with_expiration_date():
-    result = runner.invoke(app, ["upload", "--expires-in", "in 1 minute", "/Users/blonskij/data_to_upload/test"])
+    result = runner.invoke(app, ["upload", "--expires-in", "in 1 minute", path])
     assert result.exit_code == 0
     assert "Upload completed." in result.stdout
 
 
 def test_adb_upload_with_expiration_date_no_parsable():
-    result = runner.invoke(app, ["upload", "--expires-in", "somerandomstring", "/Users/blonskij/data_to_upload/test"])
+    result = runner.invoke(app, ["upload", "--expires-in", "somerandomstring", path])
     assert result.exit_code == 1
     assert """InvalidArgument("Couldn't parse date somerandomstring")""" in str(result)
 
 
 def test_adb_upload_no_validate():
-    result = runner.invoke(app, ["upload", "--no-validate", "/Users/blonskij/data_to_upload/test"])
+    result = runner.invoke(app, ["upload", "--no-validate", path])
     assert result.exit_code == 0
     assert "Validating JSON metadata" not in result.stdout
 
 
 def test_adb_upload_verbose():
-    result = runner.invoke(app, ["upload", "--verbose", "/Users/blonskij/data_to_upload/test"])
+    result = runner.invoke(app, ["upload", "--verbose", path])
     assert result.exit_code == 0
     assert "Summary" in result.stdout
     assert "Uploading 1 files from folder" in result.stdout
@@ -139,7 +142,7 @@ def test_adb_upload_verbose():
 
 
 def test_adb_upload_verbose_with_project_id_():
-    result = runner.invoke(app, ["upload", "--verbose", "--project-id", "test-OLA000000001", "/Users/blonskij/data_to_upload/test"])
+    result = runner.invoke(app, ["upload", "--verbose", "--project-id", "test-OLA000000001", path])
     assert result.exit_code == 0
     assert "Summary" in result.stdout
     assert "Uploading 1 files from folder" in result.stdout
@@ -148,7 +151,7 @@ def test_adb_upload_verbose_with_project_id_():
 
 
 def test_adb_upload_verbose_with_project_id_with_version_and_expiration_time():
-    result = runner.invoke(app, ["upload", "--verbose", "--project-id", "test-OLA000000002", "--version", "2", "--expires-in", "in 1 minute", "/Users/blonskij/data_to_upload/test"])
+    result = runner.invoke(app, ["upload", "--verbose", "--project-id", "test-OLA000000002", "--version", "2", "--expires-in", "in 1 minute", path])
     assert result.exit_code == 0
     assert "Summary" in result.stdout
     assert "Uploading 1 files from folder" in result.stdout
@@ -158,12 +161,12 @@ def test_adb_upload_verbose_with_project_id_with_version_and_expiration_time():
 
 
 def test_adb_upload_confirm():
-    result = runner.invoke(app, ["upload", "--confirm", "/Users/blonskij/data_to_upload/test"], input="y\n")
+    result = runner.invoke(app, ["upload", "--confirm", path], input="y\n")
     assert result.exit_code == 0
     assert "Proceed?" in result.stdout
 
 
 def test_adb_upload_do_not_confirm():
-    result = runner.invoke(app, ["upload", "--confirm", "/Users/blonskij/data_to_upload/test"], input="n\n")
+    result = runner.invoke(app, ["upload", "--confirm", path], input="n\n")
     assert result.exit_code == 1
     assert "Aborted." in result.stdout

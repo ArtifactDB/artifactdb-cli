@@ -11,6 +11,7 @@ import yaml
 from typer.testing import CliRunner
 from artifactdb.cli.main import app
 import re
+from helpers import find_job_url_in_string, wait_for_job_status
 
 
 runner = CliRunner()
@@ -137,7 +138,6 @@ def upload_new_project():
     # check if upload was successful
     assert result.exit_code == 0
     # wait few seconds for upload to be finished
-    time.sleep(5)
     # get project id and version
     project_id_and_version = re.findall("test-OLA.*:", result.stdout)[0][:-1]
     project_id = project_id_and_version[:-2]
@@ -147,6 +147,9 @@ def upload_new_project():
     end = "',\n    job_url"
     s = result.stdout
     job_id = s[s.find(start)+len(start):s.rfind(end)]
+    job_url = find_job_url_in_string(s)
+    # wait for upload to be completed by checking job status
+    wait_for_job_status(job_url)
     uploaded_data = {"project_id": project_id, "project_version": project_version, "job_id": job_id}
     return uploaded_data
 
@@ -156,9 +159,11 @@ def upload_new_version(upload_new_project):
     uploaded_data = upload_new_project
     project_id = uploaded_data["project_id"]
     result = runner.invoke(app, ["upload", "--project-id", project_id, files_to_upload])
-    # wait few seconds for upload to be finished
-    time.sleep(5)
     # check if upload was successful
     assert result.exit_code == 0
+    s = result.stdout
+    job_url = find_job_url_in_string(s)
+    # wait for upload to be completed by checking job
+    wait_for_job_status(job_url)
     uploaded_data["project_version"] = "2"
     return uploaded_data

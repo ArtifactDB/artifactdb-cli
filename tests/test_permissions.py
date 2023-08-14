@@ -2,6 +2,7 @@ import time
 
 from typer.testing import CliRunner
 from artifactdb.cli.main import app
+from helpers import wait_for_job_status, find_job_id_in_string
 
 
 runner = CliRunner()
@@ -169,7 +170,9 @@ def test_adb_permissions_set_change_permissions(upload_new_project):
                                  "--viewers", "John,Bob", "--owners", "Boss", project_id], input="y\n")
     assert result.exit_code == 0
     # wait for permissions to update
-    time.sleep(3)
+    job_id = find_job_id_in_string(result.stdout)
+    job_url = f"http://democli.api.artifactdb.io/v1/jobs/{job_id}"
+    wait_for_job_status(job_url)
     result = runner.invoke(app, ["permissions", "show", project_id])
     assert result.exit_code == 0
     assert "Boss" in result.stdout
@@ -184,7 +187,9 @@ def test_adb_permissions_set_add_viewers(upload_new_project):
     result = runner.invoke(app, ["permissions", "set", "--add-viewers", "Mark", project_id], input="y\n")
     assert result.exit_code == 0
     # wait for permissions to update
-    time.sleep(3)
+    job_id = find_job_id_in_string(result.stdout)
+    job_url = f"http://democli.api.artifactdb.io/v1/jobs/{job_id}"
+    wait_for_job_status(job_url)
     result = runner.invoke(app, ["permissions", "show", project_id])
     assert result.exit_code == 0
     assert "Mark" in result.stdout
@@ -195,7 +200,9 @@ def test_adb_permissions_set_add_owners(upload_new_project):
     result = runner.invoke(app, ["permissions", "set", "--add-owners", "Batman", project_id], input="y\n")
     assert result.exit_code == 0
     # wait for permissions to update
-    time.sleep(3)
+    job_id = find_job_id_in_string(result.stdout)
+    job_url = f"http://democli.api.artifactdb.io/v1/jobs/{job_id}"
+    wait_for_job_status(job_url)
     result = runner.invoke(app, ["permissions", "show", project_id])
     assert result.exit_code == 0
     assert "Batman" in result.stdout
@@ -206,7 +213,9 @@ def test_adb_permissions_set_make_public(upload_new_project):
     result = runner.invoke(app, ["permissions", "set", "--public", project_id], input="y\n")
     assert result.exit_code == 0
     # wait for permissions to update
-    time.sleep(3)
+    job_id = find_job_id_in_string(result.stdout)
+    job_url = f"http://democli.api.artifactdb.io/v1/jobs/{job_id}"
+    wait_for_job_status(job_url)
     result = runner.invoke(app, ["permissions", "show", project_id])
     assert result.exit_code == 0
     assert "read_access: public" in result.stdout
@@ -217,7 +226,9 @@ def test_adb_permissions_set_make_private(upload_new_project):
     result = runner.invoke(app, ["permissions", "set", "--private", project_id], input="y\n")
     assert result.exit_code == 0
     # wait for permissions to update
-    time.sleep(3)
+    job_id = find_job_id_in_string(result.stdout)
+    job_url = f"http://democli.api.artifactdb.io/v1/jobs/{job_id}"
+    wait_for_job_status(job_url)
     result = runner.invoke(app, ["permissions", "show", project_id])
     assert result.exit_code == 0
     assert "read_access: viewers" in result.stdout
@@ -228,7 +239,9 @@ def test_adb_permissions_set_hide(upload_new_project):
     result = runner.invoke(app, ["permissions", "set", "--hide", project_id], input="y\ny\n")
     assert result.exit_code == 0
     # wait for permissions to update
-    time.sleep(3)
+    job_id = find_job_id_in_string(result.stdout)
+    job_url = f"http://democli.api.artifactdb.io/v1/jobs/{job_id}"
+    wait_for_job_status(job_url)
     result = runner.invoke(app, ["permissions", "show", project_id])
     assert result.exit_code == 0
     assert "read_access: none" in result.stdout
@@ -250,7 +263,9 @@ def test_adb_permissions_set_option_no_confirm(upload_new_project):
                                  "--viewers", "John,Bob", "--owners", "Boss", "--no-confirm", project_id])
     assert result.exit_code == 0
     # wait for permissions to update
-    time.sleep(3)
+    job_id = find_job_id_in_string(result.stdout)
+    job_url = f"http://democli.api.artifactdb.io/v1/jobs/{job_id}"
+    wait_for_job_status(job_url)
     result = runner.invoke(app, ["permissions", "show", project_id])
     assert result.exit_code == 0
     assert "Boss" in result.stdout
@@ -268,7 +283,9 @@ def test_adb_permissions_set_option_verbose(upload_new_project):
     assert "Existing permissions found" in result.stdout
     assert "New permissions to apply" in result.stdout
     # wait for permissions to update
-    time.sleep(3)
+    job_id = find_job_id_in_string(result.stdout)
+    job_url = f"http://democli.api.artifactdb.io/v1/jobs/{job_id}"
+    wait_for_job_status(job_url)
     result = runner.invoke(app, ["permissions", "show", project_id])
     assert result.exit_code == 0
     assert "Boss" in result.stdout

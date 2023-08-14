@@ -6,11 +6,12 @@ to the REST API, the authentication, uploading logic, etc...
 
 The client itself is based on a design allowing different components to be registered and add more features. The
 uploader component is one example, providing different ways to upload data to ArtifactDB: using S3 presigned URLs, or
-STS credentials with a specific implementation to interface with s3 (boto3, awscli, etc...). As a consequence, the
+STS credentials with a specific implementation to interface with S3 (boto3, awscli, etc...). As a consequence, the
 features available on the CLI side directly depends on what's available on the client side.
 
 The implementation of the CLI is based on [typer](https://typer.tiangolo.com/), by author Tiangolo, the same person who
-wrote FastAPI.
+wrote FastAPI. This library enables quick CLI implementation, with clear documentation. It is also using
+[rich](https://github.com/Textualize/rich) behind the scene, for terminal output formatting, and so does the CLI itself.
 
 The CLI provides core commands, such `context`, `upload`, etc... but it can be extended using a plugin architecture. The
 [terminal](https://github.com/artifactdb/artifactdb-cli-terminal) plugin is one example[^1]. Once registered using

@@ -26,8 +26,9 @@ adb>
 ```
 
 The command `adb shell` loads everything in memory, and give access to an ArtifactDB shell where we can type the same
-commands as if we were typing them from our Bash terminal, with the `adb` part. And autocomplete is now super fast, try
-it! Yes, we're happy, we defeated time and are now free from suffering.
+commands as if we were typing them from our Bash terminal, without the `adb` part. And autocomplete is now super fast,
+try it! The shell itself also maintains a history file, so we can nagivate back to previous commands we typed using the
+up/down arrow keys. Yes, we're happy, we defeated time and are now free from suffering.
 
 
 

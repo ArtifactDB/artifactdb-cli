@@ -30,8 +30,8 @@ Commands
 
 
 This displays the main commonds such as `context`, `download`, `job`, etc... The design of these commands is inspired by
-the AWS CLI, with a grain of salt coming from `kubectl`. To obtain help on a specific commands, we can use add `--help`
-to one of the main command, eg. `adb context --help`:
+the AWS CLI, with a grain of salt coming from `kubectl`. To obtain help on a specific commands, we can add `--help` to
+one of the main command, eg. `adb context --help`:
 
 ```
 $ adb context --help

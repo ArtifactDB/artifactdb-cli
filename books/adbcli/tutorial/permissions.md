@@ -8,10 +8,13 @@ permissions, specifically when using the option `--verbose`.
 There are many different ways to change permissions on an existing projects. In order to better understand how, let's
 review what a permissions profile is:
 
-- Permissions can be defined at different scopes, with the `scope` field: version, project and global. When permissions
-  are defined within a specific version, all artifacts within that versions inherits from these permissions. If no
-  version-level permissions, project-level permissions are considered (this is the most common case), and if still no
-  permissions found, global-level permissions are considered (very rare case).
+- Permissions can be defined at different scopes, with the `scope` field: `version`, `project` and `global`. When
+  permissions are defined within a specific version, all artifacts within that versions inherits from these permissions.
+  If no version-level permissions, project-level permissions are considered (this is the most common case), and if still
+  no permissions found, global-level permissions are considered (very rare case). If still no global permissions, the
+  project is left without any permissions declared (unless the instance doesn't allow that) or default permissions are
+  set by the instance itself (if that instance has default permissions put in place). This is even more rare, I would
+  even say unexpected...
 - We can declare who can read the artifacts, using the field `read_access`, and read/write artifacts, using the field
   `write_access`. Allowed values are the same between `read_access` and `write_access`, only the access mode is
   different (read-only vs. read/write):
@@ -20,7 +23,7 @@ review what a permissions profile is:
   - `viewers` or `owners`: only users declared in the "viewers" or "owners" lists can access the artifacts
   - `none`: access is disabled
 - `viewers` and `owners` are list of users, defining two distinct populations that can be used in `read_access` and
-  `write_access`. By convention, viewers are used in `read_access` and owners` in `write_access`. An owner has at least
+  `write_access`. By convention, viewers are used in `read_access` and `owners` in `write_access`. An owner has at least
   the same permissions as a viewer (if an owner can write data, she can also read it back).
 
 Let's retrieve current permissions:
@@ -78,7 +81,7 @@ path: /jobs/b3dd109f-35b6-4223-a6e9-4dc81f3aed23
 status: accepted
 ```
 
-We can see that before, the scope was `project`. Because we specified a version with `PRJ000000021@1`, we declare
+We can see that before the scope was `project`. Because we specified a version with `PRJ000000021@1`, we declare
 version-level permissions. We now also have a list of viewers, and finally, we haven't specified the owners and the rest
 of the fields, but the CLI used the existing permissions (at project-level) to complete the rest of the profile.
 
@@ -134,7 +137,7 @@ write_access: owners
 Replace existing permissions? [y/n] (n): y
 ```
 
-Once permissions are applied (the instance reindex the project), we can access the artifacts anonymously, since it's
+Once permissions are applied (the instance reindexed the project), we can access the artifacts anonymously, since it's
 public. We can turn off the authentication and switch to anonymous access, using the `logout` command.
 
 ```

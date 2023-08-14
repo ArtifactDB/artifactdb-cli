@@ -105,9 +105,9 @@ Job 'b0b1983f-8d6a-43c6-94f2-0fd00d9201fb'
  ...
 ```
 
-Specifying a job ID not only (tries to) retrieve the job details, but also auto-register it. So our failing job is back
-on our configuration! Let's remove it again, with `--prune all`, which is a more drastic approach as it removes all
-registered jobs, no matter what their statuses are.
+Specifying a job ID not only (tries to) retrieve the job details, but also auto-register it. So our failing job is back,
+stored again in our configuration! Let's remove it again, with `--prune all`, which is a more drastic approach as it
+removes all registered jobs, no matter what their statuses are.
 
 ```
 adb> job check --prune all

@@ -9,7 +9,7 @@ $ echo "I love ArtifactDB" > /tmp/staging_dir/file1.txt
 $ echo "and I love the CLI even more" > /tmp/staging_dir/file2.txt
 ```
 
-We'll also create minimal metadata files. This step depends on the modes that are registered in the instance. In our
+We'll also create minimal metadata files. This step depends on the models that are registered in the instance. In our
 case, the demo instance only requires the field `path` to be defined in a JSON file. Let's create these metadata files
 now[^3]:
 
@@ -52,12 +52,14 @@ SubmittedJobInfo(
 
 And that's it, our two text files were uploaded. There are several information returned there:
 
-- We were assigned a new project ID and version, `PRJ000000021@1`, meaning project ID `PRJ000000021` and version `1`.
-- A job was created, with an ID, with a status "accepted". This is an asynchronous job created by the instance to index
+- We were assigned a new project ID and version, `PRJ000000021@1`, meaning project ID `PRJ000000021` and version `1`. If
+  you follow this tutorial, you will probably get a different project ID.
+- A job was created, with an ID and a status "accepted". This is an asynchronous job created by the instance to index
   the metadata. When the job is done, the status becomes `success` or `failure`. We'll see in the next section how to
   check these job statuses.
 
-There are other interesting options. Adding `--confirm` and `--verbose` will display interesting information:
+There are other interesting options. Adding `--confirm` and `--verbose` will display interesting information, such as
+the number of files to upload, the upload mode, the permissions which will be applied at upload time, etc...
 
 ```
 adb> upload /tmp/staging_dir --confirm --verbose
@@ -99,10 +101,13 @@ write_access: owners
 Proceed? [y/n] (n):
 ```
 
+Note if you proceed further, you will get an error, mentioning "Unable to obtain STS credentials, not supported". This
+demo instance doesn't support STS credentials at this moment...
+
 By default, as revealed by the `--verbose` option, permissions default to "private": read access limited to a list
 of explicit viewers, read/write access to owners, one of the owners being the person uploading the files. Several
 options can be used to adjust the permissions at upload time, such as `--owners`, `--viewers`, `--read-access`,
-`--write-access`, and `--permissions-json (which allows to fully declare a permissions profile). For instance, if we
+`--write-access`, and `--permissions-json` (which allows to fully declare a permissions profile). For instance, if we
 want to add "anotherperson" as an owner, and make the project public, we can specify:
 
 ```
@@ -128,7 +133,8 @@ Permissions can also be adjusted after the creation of a project. We'll address 
 
 One last example is to add a new version to an existing project, by specifying the project ID with the option
 `--project-id`. Let's do this, but first, for instructional purpose, we will create an incorrect metadata file, not
-containing the mandatory field "path". Moving back to the terminal:
+containing the mandatory field "path". Moving back to the terminal (remember to replace `PRJ000000021` with the project
+ID you were assigned ealier):
 
 ```
 adb> exit

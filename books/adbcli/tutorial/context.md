@@ -32,9 +32,9 @@ Password:
 Successfully authenticated.
 ```
 
-We need to answer some questions, but `adb` did a great job providing default yet meaningful value. How is that magic
-possible? `adb` connects to this URL and tries to discover at much information as possible: the name of the instance,
-its environment, the authencation issuer URL, the available project prefixes and their usage, etc... Not all ArtifactDB
+We need to answer some questions, but `adb` did a great job providing default yet meaningful values. How is that magic
+possible? `adb` connects to this URL and tries to discover as much information as possible: the name of the instance,
+its environment, the authentication issuer URL, the available project prefixes and their usage, etc... Not all ArtifactDB
 instances are able to provide this information, only most recent ones. If `adb` cannot guess a value, it will ask you to
 answer. Specifically, it may complain about not finding the authentication issuer URL, which can be tricky to guess. As
 a rule of thumb:
@@ -53,9 +53,9 @@ adb> context create https://democli.api.artifactdb.io/v1
 ...
 ```
 
-Note: You may find that questions are asked one after the one without returning to the beginning of the line. It happens
-on some systems, depending on the terminal configuration. It's not elegant, but still works... (yes, this can be seen as
-a bug)
+Note: You may find that questions are asked one after the other without returning to the beginning of the line. It
+happens on some systems, depending on the terminal configuration. It's not elegant, but still works... (yes, this can be
+seen as a bug)
 
 Once the context is created, we can use it:
 ```

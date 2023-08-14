@@ -1,6 +1,6 @@
 ## Searching metadata
 
-Now that we have our new project uploaded and indexed, we can search for it, with a command conviniently named `search`.
+Now that we have our new project uploaded and indexed, we can search for it, with a command conveniently named `search`.
 By default, if nothing more is specified, this command performs a wildcard search on the whole instance. If lots of
 results are returned, a pagination is put in place, asking if we want to get more results. For demo purpose, we'll
 restrict our search to our project, `PRJ000000021`:

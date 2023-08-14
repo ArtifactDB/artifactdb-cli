@@ -1,6 +1,6 @@
 ## Epilogue
 
-We did a great job, but let's face it, looking at the artifacts again, it's pretty there's not much value. While we
+We did a great job, but let's face it, looking at the artifacts again, it's pretty clear there's little value. While we
 can't delete a project by default in ArtifactDB (mostly to make sure there's no accidental data loss, but also for audit
 purpose), we can hide it.
 

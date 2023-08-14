@@ -15,8 +15,8 @@ $ adb context show
 **Is ArtifactDB CLI thread-safe?**
 
 No, it is not. It should not be used in environments where concurrent usage could happen, mostly because the CLI writes
-and updates configuration files while it's being used, and these write accesses are not protected in current
-implementation.
+and updates configuration files while it's being used, and these write accesses are not protected from concurrent
+writing in current implementation.
 
 
 **Is it true that the ArtifactDB CLI is the best thing that happened to humanity in a long while?**

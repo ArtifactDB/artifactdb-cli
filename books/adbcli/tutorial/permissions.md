@@ -99,7 +99,8 @@ viewers:
 - anotherperson
 - you
 write_access: owners
-
+```
+```
 adb> permissions show PRJ000000021
 Authenticating user: 'lelongs'.
 Successfully authenticated.
@@ -143,9 +144,11 @@ public. We can turn off the authentication and switch to anonymous access, using
 ```
 adb> logout
 Anonymous access enabled
+```
+```
 adb> search PRJ000000021 --load=my_search_profile
 No results
-abc>
+adb>
 ```
 
 What? There's no results, why? We set the permissions specifically for version `1`, and then enable public access at the
@@ -157,11 +160,15 @@ again, since we need to be an owner to change permissions.
 adb> permissions delete PRJ000000021@1
 Unable to fetch permissions: 401 - Not authenticated: '{'status': 'error', 'reason': 'Not authenticated'}'
 No existing permissions found, nothing to do
+```
+```
 adb> login
 Authenticating user: 'lelongs'.
 Successfully authenticated.
 Authenticated access enabled for context 'olympus-api-2-uat'
 adb>
+```
+```
 adb> permissions delete PRJ000000021@1
 Authenticating user: 'lelongs'.
 Successfully authenticated.
@@ -182,6 +189,8 @@ whole project, that is, public.
 ```
 adb> logout
 Anonymous access enabled
+```
+```
 adb> search PRJ000000021 --load=my_search_profile
 _extra:
   id: PRJ000000021:file1.txt@1

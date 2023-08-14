@@ -96,6 +96,8 @@ the same time, to adjust the profile content:
 ```
 adb> search PRJ000000021 --fields=_extra.id,_extra.file_size --save=my_search_profile
 ...
+```
+```
 adb> search --load=my_search_profile
 Authenticating user: 'lelongs'.
 Successfully authenticated.

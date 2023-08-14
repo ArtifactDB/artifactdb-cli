@@ -61,6 +61,8 @@ Once the context is created, we can use it:
 ```
 adb> context list
 ['olympus-api-2-uat']
+```
+```
 adb> context use olympus-api-2-uat
 Switched to context 'olympus-api-2-uat': https://democli.api.artifactdb.io/v1
 ```

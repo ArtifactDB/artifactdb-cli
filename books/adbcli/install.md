@@ -1,6 +1,6 @@
 # Installation
 
-The `artifact-cli` package can be installed from PyPi, the internal one hosted by the VIDA team:
+The `artifact-cli` package can be installed from PyPi:
 
 ```
 pip install 'artifactdb-cli'
@@ -11,6 +11,9 @@ you have at least version `0.2.0`.
 
 ```
 $ adb version
+```
+gives something similar to:
+```
 ArtifactDB-CLI version '0.2.0'
 ArtifactDB-client version '0.2.0'
 ```

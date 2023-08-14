@@ -2,7 +2,7 @@
 title: ArtifactDB Command Line Interface (CLI)
 subtitle: Tutorial, design and command reference
 author: [Sébastien Lelong / DSSC]
-date: "2023-02-03"
+date: "2023-02-16"
 subject: "Cloud-based data management"
 keywords: [API, ArtifactDB, cloud, backend, cli]
 book: true
@@ -49,3 +49,6 @@ pandoc-options:
 
 !include reference.md
 
+\pagebreak
+
+!include appendix.md

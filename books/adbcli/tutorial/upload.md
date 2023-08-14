@@ -30,6 +30,8 @@ explore a fraction there, but `adb upload --help` should provide all the details
 $ adb shell
 Welcome to the ArtifactDB shell, type `help` for available commands
 Active context 'olympus-api-2-uat': https://democli.api.artifactdb.io/v1
+```
+```
 adb> upload /tmp/staging_dir
 Authenticating user: 'lelongs'.
 Successfully authenticated.
@@ -139,6 +141,8 @@ ID you were assigned ealier):
 ```
 adb> exit
 $ echo '{"chemin": "fichier3.txt"}' > /tmp/staging_dir/file3.txt.json
+```
+```
 $ adb upload /tmp/staging_dir --project-id PRJ000000021 --confirm --verbose
 Authenticating user: 'lelongs'.
 Successfully authenticated.

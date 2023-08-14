@@ -117,6 +117,8 @@ Job 'b0b1983f-8d6a-43c6-94f2-0fd00d9201fb'
  Failure
  null
  ...
+```
+```
 adb> job check
 No jobs recorded in current context, nothing to check
 ```

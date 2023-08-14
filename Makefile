@@ -1,2 +1,2 @@
 doc:
-	typer src/artifactdb/cli/main.py utils docs > ./docs/adb-cli.md
+	typer src/artifactdb/cli/main.py utils docs --name adb | grep -v '^# `adb`$$' > ./docs/adb-cli.md

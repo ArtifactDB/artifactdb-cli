@@ -1,5 +1,3 @@
-# CLI
-
 **Usage**:
 
 ```console

@@ -6,14 +6,13 @@ import pkgutil
 
 import yaml
 import typer
-from typer import Typer, Argument, Option, Abort, Exit
+from typer import Typer, Argument, Option, Abort, Exit, Context
 from rich import print, print_json
 from rich.prompt import Prompt, Confirm
 from rich.syntax import Syntax
 from rich.console import Console
 
 import artifactdb.cli.plugins
-from artifactdb.client.excavator import get_response
 from ..cliutils import (
     get_client,
     load_config,
@@ -21,6 +20,7 @@ from ..cliutils import (
     MissingArgument,
     load_plugins_config,
     get_plugins_path,
+    load_plugins,
     InvalidArgument,
 )
 
@@ -160,6 +160,7 @@ def search():
 
 @app.command()
 def add(
+    ctx: Context,
     name: str = Argument(..., help="Plugin name to install"),
     location: str = Option(
         None,

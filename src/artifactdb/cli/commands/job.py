@@ -125,7 +125,7 @@ def display_job_status(job_status, format=None, verbose=False):
         if job_status["status"] in ("SUCCESS", "FAILURE"):
             # drop result, indented (padding-left)
             console.print(
-                Syntax(yaml.dump(job_status["result"]), "yaml", padding=(0, 1))
+                Syntax(yaml.dump(job_status.get("result")), "yaml", padding=(0, 1))
             )
         if verbose and job_status["status"] == "FAILURE":
             console.print(Syntax(job_status["traceback"], "python", padding=(0, 1)))

@@ -36,8 +36,8 @@ app = Typer(help="Upload files to an ArtifactDB instance")
 UPLOAD_MODES = enum.Enum(
     "upload_modes",
     {
-        "presigned": "s3-presigned-url",
-        "sts_boto3": "sts-credentials:boto3",
+        "presigned": "presigned",
+        "sts_boto3": "sts:boto3",
     },
 )
 
@@ -101,7 +101,7 @@ def upload_command(
         UPLOAD_MODES.presigned.value,
         help=f"Method used to upload data. `{UPLOAD_MODES.presigned.value}` uses S3 presigned-URLs "
         + "for each file to upload (recommended only for small files, max 5GiB/file). "
-        + "`sts-credentials:*` uses STS credentials, with a specific client implementation, eg "
+        + "`sts:*` uses STS credentials, with a specific client implementation, eg "
         + "`boto3`, `awscli`, `s5cmd`, etc... depending on what is available. STS credentials"
         + "enables multipart/parallel upload, and file size up to 5TB/file.",
     ),
@@ -147,19 +147,12 @@ def upload_command(
     )
     staging_path = pathlib.Path(staging_dir).expanduser()
     completed_by = None  # only adjusted when low expires_in value
-    mode = None
+    mode = upload_mode.value
     sts_impl = None
     upload_msg = None
     expire_msg = None
 
-    if upload_mode == UPLOAD_MODES.presigned:
-        mode = upload_mode.value
-        upload_msg = (
-            ":rocket: Using S3 [bright_black]presigned-URLs[/bright_black] upload mode"
-        )
-    elif upload_mode in (UPLOAD_MODES.sts_boto3,):
-        mode, sts_impl = upload_mode.value.split(":")
-        upload_msg = f":rocket: Using [bright_black]STS[/bright_black] credentials with [bright_black]{sts_impl}[/bright_black] client"
+    upload_msg = f":rocket: Using [bright_black]{mode}[/bright_black] upload mode"
     if expires_in:
         parsed = dateparser.parse(expires_in)
         if not parsed:
@@ -205,7 +198,7 @@ def upload_command(
     status, project_id, version = client.upload_project(
         staging_dir=staging_path.as_posix(),
         permissions_info=permissions,
-        mode=mode,
+        upload_mode=mode,
         project_id=project_id,
         version=version,
         expires_in=expires_in,

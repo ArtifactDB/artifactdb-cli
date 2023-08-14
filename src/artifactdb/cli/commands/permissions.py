@@ -10,7 +10,7 @@ from rich.prompt import Prompt, Confirm
 from rich.syntax import Syntax
 from rich.console import Console
 
-from artifactdb.client.excavator import get_response, ValidationError
+from artifactdb.client.excavator.excavator import ValidationError
 from artifactdb.client.exceptions import ADBClientError
 from artifactdb.client.models import PermissionsInfo
 from ..cliutils import (
@@ -59,11 +59,9 @@ def fetch_permissions(project_id, version=None):
     client = get_contextual_client()
     endpoint = build_endpoint(project_id, version)
     try:
-        res = get_response(
-            client._http,
+        res = client.request(
             "get",
             client._url + endpoint,
-            auth=client._auth,
         )
         return res.json()
     except ADBClientError as exc:
@@ -97,12 +95,10 @@ def apply_permissions(permissions, project_id, version, existings, confirm, verb
     client = get_contextual_client()
     endpoint = build_endpoint(project_id, version)
     try:
-        res = get_response(
-            client._http,
+        res = client.request(
             "put",
             client._url + endpoint,
             json=permissions,
-            auth=client._auth,
         )
         return res.json()
     except ADBClientError as exc:
@@ -128,11 +124,9 @@ def delete_permissions(project_id, version, existings, confirm, verbose):
     client = get_contextual_client()
     endpoint = build_endpoint(project_id, version)
     try:
-        res = get_response(
-            client._http,
+        res = client.request(
             "delete",
             client._url + endpoint,
-            auth=client._auth,
         )
         return res.json()
     except ADBClientError as exc:

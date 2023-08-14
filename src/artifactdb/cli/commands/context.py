@@ -8,7 +8,6 @@ from rich.prompt import Prompt, Confirm
 from rich.syntax import Syntax
 from rich.console import Console
 
-from artifactdb.client.excavator import get_response
 from ..cliutils import (
     get_client,
     load_config,
@@ -141,7 +140,7 @@ def create(
     if not auth_url:
         try:
             primary = client._wellknown["primary"]
-            wellknown = get_response(client._http, "get", primary).json()
+            wellknown = client.request("get", primary).json()
             auth_url = wellknown["issuer"]
             print(f"Found auth issuer URL {auth_url}")
         except (AttributeError, KeyError) as e:

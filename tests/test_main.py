@@ -24,3 +24,16 @@ def test_adb_no_params():
     assert result.exit_code == 2
     assert "Error" in result.stdout
     assert "Missing command." in result.stdout
+
+
+def test_adb_version():
+    result = runner.invoke(app, "version")
+    assert result.exit_code == 0
+    assert "ArtifactDB-CLI version" in result.stdout
+    assert "ArtifactDB-client version" in result.stdout
+
+
+def test_adb_version_help():
+    result = runner.invoke(app, ["version", "--help"])
+    assert result.exit_code == 0
+    assert "Print the CLI version information" in result.stdout

@@ -109,7 +109,7 @@ def auth_with_almighty_token():
         payload = {
             "username": "testuser",
             "client_id": client,
-            "resource_access": {client: {"roles": ["uploader"]}},
+            "resource_access": {client: {"roles": ["admin"]}},
         }
 
         # get almighty token

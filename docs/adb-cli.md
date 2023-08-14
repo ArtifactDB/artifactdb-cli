@@ -17,7 +17,10 @@ $ [OPTIONS] COMMAND [ARGS]...
 * `context`: Manage ArtifactDB contexts (connections,...
 * `download`: Download artifacts.
 * `job`: Manage jobs (indexing, ...)
+* `permissions`: Manage project's permissions
+* `plugins`: Manage CLI plugins
 * `search`: Searching metadata documents, using active...
+* `shell`: Launch interactive shell
 * `upload`: Upload artifacts.
 
 ## `context`
@@ -57,7 +60,7 @@ $ context create [OPTIONS] URL
 
 **Options**:
 
-* `--auth-url TEXT`: Keycloak auth URL (contains realm name, eg. `awesome` https://mykeycloak.mycompany.com/realms/awesome)  [required]
+* `--auth-url TEXT`: Keycloak auth URL (contains realm name, eg. `awesome` https://mykeycloak.mycompany.com/realms/awesome)
 * `--name TEXT`: Context name. The instance name (if exposed) is used by default to name the context
 * `--auth-client-id TEXT`: Client ID used for authentication. The instance's main client ID (if exposed) is used by default
 * `--auth-username TEXT`: Username used in authentication, default to `whoami`
@@ -196,6 +199,233 @@ $ job list [OPTIONS]
 * `--verbose / --no-verbose`: Print all jobs information  [default: False]
 * `--help`: Show this message and exit.
 
+## `permissions`
+
+Manage project's permissions
+
+**Usage**:
+
+```console
+$ permissions [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `delete`: Delete permission profile for a given...
+* `set`: Replace existing permissions or create new...
+* `show`: Show current permissions for a given project,...
+
+### `permissions delete`
+
+Delete permission profile for a given project/version. After deletion, the new permissions will
+inherit from upper scope: version > project > global. If no permissions can be inherited,
+the project/version becomes permanently unavailable (except admins), USE WITH CAUTION !
+(you've been warned)
+
+**Usage**:
+
+```console
+$ permissions delete [OPTIONS] [WHAT]
+```
+
+**Arguments**:
+
+* `[WHAT]`: Identifier for which the permissions will deleted. Notation can be a [project_id], [project_id@version] for a specific version. Alternately, --project-id and --version can be used.
+
+**Options**:
+
+* `--project-id TEXT`: Project ID.
+* `--version TEXT`: Requires --project-id. Delete permissions for a specific version of a project
+* `--confirm / --no-confirm`: Ask for confirmation before repla.  [default: True]
+* `--verbose / --no-verbose`: Show permissions that will be deleted  [default: False]
+* `--help`: Show this message and exit.
+
+### `permissions set`
+
+Replace existing permissions or create new ones. A full permissions document can be passed
+with `--permissions`, or individual parts can be provided with the other options.
+
+**Usage**:
+
+```console
+$ permissions set [OPTIONS] [WHAT]
+```
+
+**Arguments**:
+
+* `[WHAT]`: Identifier for which the permissions will be replaced or set. Notation can be a [project_id], [project_id@version] for a specific version. Alternately, --project-id and --version can be used.
+
+**Options**:
+
+* `--project-id TEXT`: Project ID.
+* `--version TEXT`: Requires --project-id. Fetch permissions for a specific version of a project
+* `--permissions TEXT`: New permissions, JSON string format. Partial permissions information will be completed with default permissions values. See also --merge.
+* `--merge / --no-merge`: Using existing permissions as base, and merge new declared permissions on top of it. This allows to change parts of the permissions profile without having to re-declare it completely  [default: True]
+* `--read-access TEXT`: Defines read access rule
+* `--write-access TEXT`: Defines write access rule
+* `--viewers TEXT`: Replace existing viewers with comma-separated list of new viewers. An empty string remove all viewers.
+* `--add-viewers TEXT`: Add one or more viewers (comma-separated) to existing ones
+* `--owners TEXT`: Replace existing owners with comma-separated list of new owners. An empty string remove all owners.
+* `--add-owners TEXT`: Add one or more owners (comma-separated) to existing ones
+* `--public / --no-public`: Make the project publicly accessible (shortcut to --read-access=public  [default: False]
+* `--private / --no-private`: Restrict the access to the project to viewers only (shortcut to --read-access=viewers  [default: False]
+* `--hide / --no-hide`: Hide the dataset to anyone except admins (shortcut to --read-access=none --write-access=none  [default: False]
+* `--confirm / --no-confirm`: Ask for confirmation if existing permissions exist, before replacing them.  [default: True]
+* `--verbose / --no-verbose`: Show additional information, eg. existing vs. new permissions, etc...  [default: False]
+* `--help`: Show this message and exit.
+
+### `permissions show`
+
+Show current permissions for a given project, version. Note permissions for a specific
+version may inherit from the project itself, check the `scope` field to
+determine is permissions are project or version specific.
+
+**Usage**:
+
+```console
+$ permissions show [OPTIONS] [WHAT]
+```
+
+**Arguments**:
+
+* `[WHAT]`: Identifier used to obtain current permissions from. Notation can be a [project_id], [project_id@version] for a specific version. Alternately, --project-id and --version can be used.
+
+**Options**:
+
+* `--project-id TEXT`: Project ID.
+* `--version TEXT`: Requires --project-id. Fetch permissions for a specific version of a project
+* `--help`: Show this message and exit.
+
+## `plugins`
+
+Manage CLI plugins
+
+**Usage**:
+
+```console
+$ plugins [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `add`
+* `disable`: Disable a registered plugin.
+* `enable`: Enable a registered plugin.
+* `list`: List registered plugins.
+* `remove`
+* `show`: Show plugin configuration.
+
+### `plugins add`
+
+**Usage**:
+
+```console
+$ plugins add [OPTIONS] NAME
+```
+
+**Arguments**:
+
+* `NAME`: Plugin name to install  [required]
+
+**Options**:
+
+* `--location TEXT`: PyPI index URL (default: pip's default one, https://pypi.org/simple), or local  folder
+* `--verbose / --no-verbose`: Print debug information while registering the plugin.  [default: False]
+* `--help`: Show this message and exit.
+
+### `plugins disable`
+
+Disable a registered plugin. Useful to deactivate a plugin causing issues.
+
+**Usage**:
+
+```console
+$ plugins disable [OPTIONS] NAME
+```
+
+**Arguments**:
+
+* `NAME`: Plugin name  [required]
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `plugins enable`
+
+Enable a registered plugin.
+
+**Usage**:
+
+```console
+$ plugins enable [OPTIONS] NAME
+```
+
+**Arguments**:
+
+* `NAME`: Plugin name  [required]
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `plugins list`
+
+List registered plugins.
+
+**Usage**:
+
+```console
+$ plugins list [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+### `plugins remove`
+
+**Usage**:
+
+```console
+$ plugins remove [OPTIONS] NAME
+```
+
+**Arguments**:
+
+* `NAME`: Plugin name to install  [required]
+
+**Options**:
+
+* `--verbose / --no-verbose`: Print debug information while registering the plugin.  [default: False]
+* `--help`: Show this message and exit.
+
+### `plugins show`
+
+Show plugin configuration.
+
+**Usage**:
+
+```console
+$ plugins show [OPTIONS] NAME
+```
+
+**Arguments**:
+
+* `NAME`: Plugin name  [required]
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
 ## `search`
 
 Searching metadata documents, using active context.
@@ -208,7 +438,7 @@ $ search [OPTIONS] [QUERY]
 
 **Arguments**:
 
-* `[QUERY]`: ElasticSearch query string. Ex: `path:myfile.txt AND title:"important"
+* `[QUERY]`: ElasticSearch query string. Ex: `path:myfile.txt AND title:"important"`
 
 **Options**:
 
@@ -216,8 +446,28 @@ $ search [OPTIONS] [QUERY]
 * `--project-id TEXT`: Search within a specific project ID. Same as specifying `_extra.project_id:<project_id>` in the query parameter.
 * `--version TEXT`: Requires --project-id. Searching within a specific version. Same as specifying `_extra.version:<version>` in the query parameter.
 * `--latest / --no-latest`: Search for latest versions only  [default: False]
-* `--size INTEGER RANGE`: Number of results returned in a page  [default: 50]
-* `--formatter [json|yaml]`: Formatter name used to display results. Default is to display all fields, in YAML format. See `formatter` command for more  [default: yaml]
+* `--size INTEGER RANGE`: Number of results returned in a page
+* `--format TEXT`: Format used to display results. Default is YAML format.
+* `--save TEXT`: Save search parameters in a profile
+* `--load TEXT`: Load a saved search profile and use it for search parameters.
+* `--delete TEXT`: Delete a search profile
+* `--ls / --no-ls`: List search profile names and exit.  [default: False]
+* `--show TEXT`: Show search profile content and exit.
+* `--verbose / --no-verbose`: Print more informational/debug messages  [default: False]
+* `--help`: Show this message and exit.
+
+## `shell`
+
+Launch interactive shell
+
+**Usage**:
+
+```console
+$ shell [OPTIONS]
+```
+
+**Options**:
+
 * `--help`: Show this message and exit.
 
 ## `upload`
@@ -243,7 +493,7 @@ $ upload [OPTIONS] STAGING_DIR
 * `--read-access [owners|viewers|authenticated|public|none]`: Role to allow data access in read-only mode. `viewers` restricts access to the list specified with the argument --viewers (default), same for `owners`. `authenticated` allows read-only access to any users with a valid token, `public` allows anonymous access. `none` disables read-only access.  [default: viewers]
 * `--write-access [owners|viewers|authenticated|public|none]`: Role to allow data access in read-write mode. `owners` restricts read/write access to the list specified with the argument --owners, same for `viewers`. `authenticated` allows read/write access to any users with a valid token, `public` allows any anonymous users to modify data, and `none` disable read/write access.  [default: owners]
 * `--permissions-json TEXT`: Permissions for the newly creation project or version, in JSON format. See documentation for the context
-* `--upload-mode [s3-presigned-url|sts-credentials:boto3]`: Method used to upload data. `s3-presigned-url` uses S3 presigned-URLs for each file to upload (recommended only for small files, max 5GiB/file). `sts-credentials:*` uses STS credentials, with a specific client implementation, eg `boto3`, `awscli`, `s5cmd`, etc... depending on what is available. STS credentialsenables multipart/parallel upload, and file size up to 5TB/file.  [default: s3-presigned-url]
+* `--upload-mode [presigned|sts:boto3]`: Method used to upload data. `presigned` uses S3 presigned-URLs for each file to upload (recommended only for small files, max 5GiB/file). `sts:*` uses STS credentials, with a specific client implementation, eg `boto3`, `awscli`, `s5cmd`, etc... depending on what is available. STS credentialsenables multipart/parallel upload, and file size up to 5TB/file.  [default: presigned]
 * `--expires-in TEXT`: Upload transient artifacts, expiring (purged) after given experation date. Ex: '2022-12-25T00:00:00', 'December 25th', 'in 3 days', etc...
 * `--validate / --no-validate`: Validate metadata JSON files, using the $schema field and API validation endpoint  [default: True]
 * `--verbose / --no-verbose`: Print information about what the command is performing  [default: False]

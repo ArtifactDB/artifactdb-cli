@@ -1,2 +1,2 @@
 doc:
-	typer src/artifactdb/cli/main.py utils docs > ./docs/adb-cli.rst
+	typer src/artifactdb/cli/main.py utils docs > ./docs/adb-cli.md

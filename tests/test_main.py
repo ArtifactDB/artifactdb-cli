@@ -23,4 +23,4 @@ def test_adb_no_params():
     result = runner.invoke(app)
     assert result.exit_code == 2
     assert "Error" in result.stdout
-    assert "Missing command. " in result.stdout
+    assert "Missing command." in result.stdout

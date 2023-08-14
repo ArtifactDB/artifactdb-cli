@@ -16,7 +16,7 @@ def test_adb_download_no_args():
 def test_adb_download_option_help():
     result = runner.invoke(app, ["download", "--help"])
     assert result.exit_code == 0
-    arguments = ["what", "dest"]
+    arguments = ["WHAT", "DEST"]
     for argument in arguments:
         assert argument in result.stdout
     options = [

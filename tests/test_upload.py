@@ -1,5 +1,6 @@
 from typer.testing import CliRunner
 from artifactdb.cli.main import app
+import pytest
 
 runner = CliRunner()
 
@@ -14,7 +15,7 @@ def test_adb_upload_no_args():
 def test_adb_upload_option_help():
     result = runner.invoke(app, ["upload", "--help"])
     assert result.exit_code == 0
-    arguments = ["staging_dir"]
+    arguments = ["STAGING_DIR"]
     for argument in arguments:
         assert argument in result.stdout
     options = [
@@ -38,5 +39,131 @@ def test_adb_upload_option_help():
 
 def test_adb_upload_option_invalid():
     result = runner.invoke(app, ["upload", "--some-invalid-option"])
+    assert result.exit_code == 2
     assert "Error" in result.stdout
     assert "No such option: --some-invalid-option" in result.stdout
+
+
+def test_adb_upload_new_project():
+    result = runner.invoke(app, ["upload", "/Users/blonskij/data_to_upload/test"])
+    assert result.exit_code == 0
+    assert "Upload completed." in result.stdout
+
+
+def test_adb_upload_with_existing_project_id():
+    result = runner.invoke(app, ["upload", "--project-id", "test-OLA000000001", "/Users/blonskij/data_to_upload/test"])
+    print(result.stdout)
+    assert result.exit_code == 0
+    assert "Upload completed." in result.stdout
+
+
+def test_adb_upload_with_non_existing_project_id():
+    result = runner.invoke(app, ["upload", "--project-id", "test-OLA99999999", "/Users/blonskij/data_to_upload/test"])
+
+    assert result.exit_code == 1
+
+
+def test_adb_upload_with_existing_project_id_and_version():
+    result = runner.invoke(app, ["upload", "--project-id", "test-OLA000000002", "--version", "2", "/Users/blonskij/data_to_upload/test"])
+    print(result.stdout)
+    assert result.exit_code == 0
+    assert "Upload completed." in result.stdout
+
+
+def test_adb_upload_with_only_version_should_fail():
+    result = runner.invoke(app, ["upload", "--version", "9", "/Users/blonskij/data_to_upload/test"])
+    assert result.exit_code == 1
+    assert "If 'version' is set the 'project_id' must also be set." in str(result)
+
+
+def test_adb_upload_with_owners():
+    result = runner.invoke(app, ["upload", "--owners", "testuser,batman", "/Users/blonskij/data_to_upload/test"])
+    print(result.stdout)
+    assert result.exit_code == 0
+    assert "Upload completed." in result.stdout
+
+
+def test_adb_upload_with_viewers():
+    result = runner.invoke(app, ["upload", "--viewers", "testuser,batman", "/Users/blonskij/data_to_upload/test"])
+    print(result.stdout)
+    assert result.exit_code == 0
+    assert "Upload completed." in result.stdout
+
+
+@pytest.mark.parametrize("role", ["owners", "viewers", "authenticated", "public", "none"])
+def test_adb_upload_with_read_access(role):
+    result = runner.invoke(app, ["upload", "--read-access", role, "/Users/blonskij/data_to_upload/test"])
+    assert result.exit_code == 0
+    assert "Upload completed." in result.stdout
+
+
+@pytest.mark.parametrize("role", ["owners", "viewers", "authenticated", "public", "none"])
+def test_adb_upload_with_write_access(role):
+    result = runner.invoke(app, ["upload", "--write-access", role, "/Users/blonskij/data_to_upload/test"])
+    assert result.exit_code == 0
+    assert "Upload completed." in result.stdout
+
+
+# consult with Sebastien
+# def test_adb_upload_with_upload_mode():
+#     result = runner.invoke(app, ["upload", "--upload-mode", "sts-credentials:boto3", "/Users/blonskij/data_to_upload/test"])
+#     print(result.stdout)
+#     assert result.exit_code == 0
+#     assert "Upload completed." in result.stdout
+
+def test_adb_upload_with_expiration_date():
+    result = runner.invoke(app, ["upload", "--expires-in", "in 1 minute", "/Users/blonskij/data_to_upload/test"])
+    assert result.exit_code == 0
+    assert "Upload completed." in result.stdout
+
+
+def test_adb_upload_with_expiration_date_no_parsable():
+    result = runner.invoke(app, ["upload", "--expires-in", "somerandomstring", "/Users/blonskij/data_to_upload/test"])
+    assert result.exit_code == 1
+    assert """InvalidArgument("Couldn't parse date somerandomstring")""" in str(result)
+
+
+def test_adb_upload_no_validate():
+    result = runner.invoke(app, ["upload", "--no-validate", "/Users/blonskij/data_to_upload/test"])
+    assert result.exit_code == 0
+    assert "Validating JSON metadata" not in result.stdout
+
+
+def test_adb_upload_verbose():
+    result = runner.invoke(app, ["upload", "--verbose", "/Users/blonskij/data_to_upload/test"])
+    assert result.exit_code == 0
+    assert "Summary" in result.stdout
+    assert "Uploading 1 files from folder" in result.stdout
+    assert "As a new project" in result.stdout
+    assert "Using S3 presigned-URLs upload mode" in result.stdout
+
+
+def test_adb_upload_verbose_with_project_id_():
+    result = runner.invoke(app, ["upload", "--verbose", "--project-id", "test-OLA000000001", "/Users/blonskij/data_to_upload/test"])
+    assert result.exit_code == 0
+    assert "Summary" in result.stdout
+    assert "Uploading 1 files from folder" in result.stdout
+    assert "As a new version within project test-OLA000000001" in result.stdout
+    assert "Using S3 presigned-URLs upload mode" in result.stdout
+
+
+def test_adb_upload_verbose_with_project_id_with_version_and_expiration_time():
+    result = runner.invoke(app, ["upload", "--verbose", "--project-id", "test-OLA000000002", "--version", "2", "--expires-in", "in 1 minute", "/Users/blonskij/data_to_upload/test"])
+    assert result.exit_code == 0
+    assert "Summary" in result.stdout
+    assert "Uploading 1 files from folder" in result.stdout
+    assert "To project test-OLA000000002 and version 2" in result.stdout
+    assert "Using S3 presigned-URLs upload mode" in result.stdout
+    assert "Expiring 'in 1 minute'" in result.stdout
+
+
+def test_adb_upload_confirm():
+    result = runner.invoke(app, ["upload", "--confirm", "/Users/blonskij/data_to_upload/test"], input="y\n")
+    assert result.exit_code == 0
+    assert "Proceed?" in result.stdout
+
+
+def test_adb_upload_do_not_confirm():
+    result = runner.invoke(app, ["upload", "--confirm", "/Users/blonskij/data_to_upload/test"], input="n\n")
+    assert result.exit_code == 1
+    assert "Aborted." in result.stdout
